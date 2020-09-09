@@ -83,8 +83,9 @@ public class ProxyUserServiceImpl implements ProxyUserService {
     public User findByIdentifiers(@NonNull DataAdapter adapter,
                                   @NonNull String idpIdentifier,
                                   @NonNull List<String> identifiers,
-                                  @NonNull List<String> attrsToReturnIdentifiers) {
-        return adapter.findByIdentifiers(idpIdentifier,identifiers, attrsToReturnIdentifiers);
+                                  @NonNull List<String> attrIdentifiers)
+    {
+        return adapter.findByIdentifiers(idpIdentifier, identifiers, attrIdentifiers);
     }
 
 }

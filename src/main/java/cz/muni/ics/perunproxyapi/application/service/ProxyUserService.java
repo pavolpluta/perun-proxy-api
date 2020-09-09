@@ -118,17 +118,16 @@ public interface ProxyUserService {
 
     /**
      * Find user by given source IdP entityId and additional source identifiers.
-     * <br>
-     * <b>Works only with LDAP adapter!</b>
+     * !!!! Works only with LDAP adapter !!!!
      * @param adapter Adapter to be used. Only LDAP is supported.
      * @param idpIdentifier Identifier of source Identity Provider.
      * @param identifiers List of strings containing identifiers of the user.
-     * @param attrsToReturnIdentifiers Required user's attributes to fetch.
-     * @return User or null
+     * @param attrIdentifiers Identifiers of the attributes to be fetched for user.
+     * @return User or null.
      */
     User findByIdentifiers(@NonNull DataAdapter adapter,
                            @NonNull String idpIdentifier,
                            @NonNull List<String> identifiers,
-                           @NonNull List<String> attrsToReturnIdentifiers)
-    ;
+                           @NonNull List<String> attrIdentifiers);
+
 }

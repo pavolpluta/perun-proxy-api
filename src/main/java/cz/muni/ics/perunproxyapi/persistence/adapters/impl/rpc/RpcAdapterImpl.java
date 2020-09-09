@@ -482,9 +482,12 @@ public class RpcAdapterImpl implements FullAdapter {
     }
 
     @Override
-    public User findByIdentifiers(@NonNull String idpIdentifier, @NonNull List<String> identifiers, @NonNull List<String> attrsToReturnIdentifiers) {
-        log.error("Caller tried to find user by additional identifiers through the RPC adapter, which is not supported.");
-        throw new UnsupportedOperationException("Rpc adapter does not support this operation.");
+    public User findByIdentifiers(@NonNull String idpIdentifier,
+                                  @NonNull List<String> identifiers,
+                                  @NonNull List<String> attrIdentifiers)
+    {
+        log.error("Tried to find a user by additional identifiers through the RPC adapter, which is not supported.");
+        throw new UnsupportedOperationException("This operation is not supported.");
     }
 
     // private methods

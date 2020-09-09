@@ -89,22 +89,22 @@ public class FacadeUtils {
 
     /**
      * Map User object to UserDTO to be returned by API call.
-     * @param user - fetched user
+     * @param user User object.
      * @return UserDTO or null
      */
     public static UserDTO mapUserToUserDTO(User user) {
         if (user != null){
-            return new UserDTO(user.getLogin(), mapAttributeValuesToJsonNodes(user.getAttributes()));
+            return new UserDTO(user.getLogin(), FacadeUtils.mapAttributeValuesToJsonNodes(user.getAttributes()));
         }
         return null;
     }
 
     /**
-     * Trasform PerunAttributeValue object in map to get only raw attribute value in JSONNode format.
+     * Transform Map<String, PerunAttributeValue> to Map<String, JsonNode>.
      * @param attrValueMap Map to be transformed with PerunAttributeValue value.
      * @return Transformed map with JsonNode as value.
      */
-    private static Map<String,JsonNode> mapAttributeValuesToJsonNodes(Map<String, PerunAttributeValue> attrValueMap) {
+    public static Map<String, JsonNode> mapAttributeValuesToJsonNodes(Map<String, PerunAttributeValue> attrValueMap) {
         Map<String, JsonNode> attributes = new HashMap<>();
         if (attrValueMap != null) {
             attrValueMap.forEach((key, value) -> attributes.put(key, (value != null) ?
@@ -112,6 +112,7 @@ public class FacadeUtils {
             );
             return attributes;
         }
+
         log.warn("No attributes found. Returning empty map.");
         return attributes;
     }

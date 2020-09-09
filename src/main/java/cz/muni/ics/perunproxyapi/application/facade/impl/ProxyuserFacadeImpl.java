@@ -67,15 +67,15 @@ public class ProxyuserFacadeImpl implements ProxyuserFacade {
 
     @Override
     public UserDTO findByIdentifiers(@NonNull String idpIdentifier, @NonNull List<String> identifiers) {
-
         JsonNode options = FacadeUtils.getOptions(FIND_BY_IDENTIFIERS, methodConfigurations);
 
-        // TODO works only with LDAP
+        //TODO: currently works only with LDAP
+        //DataAdapter adapter = FacadeUtils.getAdapter(adaptersContainer, options);
         DataAdapter adapter = adaptersContainer.getLdapAdapter();
         log.debug("Calling proxyUserService.findByIdentifiers on adapter {}", adapter.getClass());
-        
-        User user = proxyUserService.findByIdentifiers(adapter, idpIdentifier, identifiers, getDefaultFields(options));
 
+        List<String> fieldsToFetch = this.getDefaultFields(options);
+        User user = proxyUserService.findByIdentifiers(adapter, idpIdentifier, identifiers, fieldsToFetch);
         return FacadeUtils.mapUserToUserDTO(user);
     }
 
@@ -129,8 +129,9 @@ public class ProxyuserFacadeImpl implements ProxyuserFacade {
     private List<String> getDefaultFields(JsonNode options) {
         List<String> fields = new ArrayList<>();
         if (!options.hasNonNull(DEFAULT_FIELDS)) {
-            log.warn("Default fields are missing in the configuration file. Returning empty list.");
-            return fields;
+                log.error("Required option {} has not been found by the getEntitlements method. " +
+                        "Check your configuration.", DEFAULT_FIELDS);
+                throw new IllegalArgumentException("Required option has not been found");
         }
 
         for (JsonNode subNode : options.get(DEFAULT_FIELDS)) {

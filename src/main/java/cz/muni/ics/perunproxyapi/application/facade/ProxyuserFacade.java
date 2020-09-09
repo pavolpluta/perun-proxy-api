@@ -30,14 +30,12 @@ public interface ProxyuserFacade {
 
     /**
      * Find user by given source IdP entityId and additional source identifiers.
-     * <br>
-     * <b>Works only with LDAP adapter!</b>
+     * !!!! Works only with LDAP adapter !!!!
      * @param idpIdentifier Identifier of source Identity Provider.
-     * @param identifiers List of strings containing identifiers of the user.
+     * @param identifiers List of strings containing identifiers of a user.
      * @return User or null.
      */
-    UserDTO findByIdentifiers(@NonNull String idpIdentifier, @NonNull List<String> identifiers)
-    ;
+    UserDTO findByIdentifiers(@NonNull String idpIdentifier, @NonNull List<String> identifiers);
 
     /**
      * Get user with fields by his/her login.

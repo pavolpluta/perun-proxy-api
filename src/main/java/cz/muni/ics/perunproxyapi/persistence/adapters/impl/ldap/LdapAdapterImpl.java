@@ -338,7 +338,7 @@ public class LdapAdapterImpl implements DataAdapter {
     @Override
     public User getUserWithAttributesByLogin(@NonNull String loginAttributeIdentifier,
                                              @NonNull String login,
-                                             @NonNull List<String> attrsToReturnIdentifiers)
+                                             @NonNull List<String> attrIdentifiers)
     {
         AttributeObjectMapping loginMapping = this.getMappingForAttrName(loginAttributeIdentifier);
         if (loginMapping == null || !StringUtils.hasText(loginMapping.getRpcName())) {
@@ -347,7 +347,7 @@ public class LdapAdapterImpl implements DataAdapter {
             throw new IllegalArgumentException("Cannot fetch unknown attribute");
         }
 
-        final Set<AttributeObjectMapping> finalMappings = this.getFinalAttrMapping(attrsToReturnIdentifiers);
+        final Set<AttributeObjectMapping> finalMappings = this.getAttributeMappings(attrIdentifiers);
         Filter filter = new AndFilter()
                 .and(new EqualsFilter(OBJECT_CLASS, PERUN_USER))
                 .and(new EqualsFilter(loginMapping.getLdapName(), login));
@@ -470,41 +470,37 @@ public class LdapAdapterImpl implements DataAdapter {
     @Override
     public User findByIdentifiers(@NonNull String idpIdentifier,
                                   @NonNull List<String> identifiers,
-                                  @NonNull List<String> attrsToReturnIdentifiers) {
-        AttributeObjectMapping additIdMapping = this.getMappingForAttrName(additionalIdentifiersAttrIdentifier);
-        if (additIdMapping == null || !StringUtils.hasText(additIdMapping.getLdapName())) {
+                                  @NonNull List<String> attrIdentifiers) {
+        AttributeObjectMapping additionalIdentifiersMapping = this.getMappingForAttrName(
+                additionalIdentifiersAttrIdentifier);
+        if (additionalIdentifiersMapping == null
+                || !StringUtils.hasText(additionalIdentifiersMapping.getLdapName()))
+        {
             log.error("Cannot look for users, name of the LDAP attribute is unknown for identifier {} (mapping:{})",
-                    additionalIdentifiersAttrIdentifier, additIdMapping);
+                    additionalIdentifiersAttrIdentifier, additionalIdentifiersMapping);
             throw new IllegalArgumentException("Cannot fetch unknown attribute");
         }
 
-        Set<AttributeObjectMapping> attrMappings = this.getMappingsForAttrNames(attrsToReturnIdentifiers);
-        if (attrMappings == null) {
-            attrMappings = new HashSet<>();
-        }
-        final Set<AttributeObjectMapping> finalMappings = attrMappings.stream()
-                .filter(mapping -> {
-                    if (!StringUtils.hasText(mapping.getLdapName())) {
-                        log.warn("No LDAP name found in mapping {}", mapping);
-                        return false;
-                    }
-                    return true;
-                }).collect(Collectors.toSet());
-
-
-        OrFilter orFilter = new OrFilter();
+        Set<AttributeObjectMapping> mappings = this.getAttributeMappings(attrIdentifiers);
+        OrFilter identifiersFilter = new OrFilter();
         for (String identifier : identifiers) {
-            orFilter.or(new LikeFilter(additIdMapping.getLdapName(), identifier));
+            if (StringUtils.hasText(identifier)) {
+                identifiersFilter.or(
+                        new LikeFilter(additionalIdentifiersMapping.getLdapName(), '*' + identifier + '*')
+                );
+            }
         }
-        AndFilter andFilter = new AndFilter().and(orFilter).and(new EqualsFilter(OBJECT_CLASS,PERUN_USER));
+        AndFilter filter = new AndFilter()
+                .and(identifiersFilter)
+                .and(new EqualsFilter(OBJECT_CLASS,PERUN_USER));
 
         LdapQuery ldapQuery = query()
                 .base(OU_PEOPLE)
-                .attributes(this.constructUserAttributes(finalMappings))
+                .attributes(this.constructUserAttributes(mappings))
                 .searchScope(ONELEVEL)
-                .filter(andFilter);
+                .filter(filter);
 
-        ContextMapper<User> mapper = this.userMapper(new HashSet<>());
+        ContextMapper<User> mapper = this.userMapper(mappings);
         return connectorLdap.searchForObject(ldapQuery, mapper);
     }
 
@@ -937,7 +933,7 @@ public class LdapAdapterImpl implements DataAdapter {
         return connectorLdap.searchForObject(query, mapper);
     }
 
-    private Set<AttributeObjectMapping> getFinalAttrMapping(List<String> attrIdentifiers) {
+    private Set<AttributeObjectMapping> getAttributeMappings(List<String> attrIdentifiers) {
         Set<AttributeObjectMapping> attrMappings = this.getMappingsForAttrNames(attrIdentifiers);
         if (attrMappings == null) {
             attrMappings = new HashSet<>();
