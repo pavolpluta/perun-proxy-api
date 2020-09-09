@@ -56,6 +56,23 @@ public class ProxyUserProtectedController {
     }
 
     /**
+     * Find user by given source IdP entityId and additional source identifiers.
+     * <br>
+     * <b>Works only with LDAP adapter!</b>
+     *
+     * @param idpIdentifier Identifier of source Identity Provider.
+     * @param identifiers List of string containing identifiers of the user.
+     * @return User or null.
+     */
+    @ResponseBody
+    @RequestMapping(value = "/findByIdentifiers", method = RequestMethod.GET, produces = APPLICATION_JSON_VALUE)
+    public UserDTO findByIdentifiers(@RequestParam(value = PARAM_IDP_IDENTIFIER) String idpIdentifier,
+                                     @RequestParam(value = PARAM_IDENTIFIERS) List<String> identifiers) {
+        return facade.findByIdentifiers(idpIdentifier, identifiers);
+    }
+
+
+    /**
      * Get Perun user by login. <br>
      * <br>
      * <b>EXAMPLE CURL:</b>

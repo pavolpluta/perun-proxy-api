@@ -172,14 +172,27 @@ public interface DataAdapter {
      * Get user with attributes by given attribute name, login value and required user's attributes.
      * @param loginAttributeIdentifier Identifier of the attribute containing the login.
      * @param login Actual login of user.
-     * @param attrIdentifiers List of attribute identifiers that should be fetched as well.
+     * @param attrsToReturnIdentifiers List of attribute identifiers that should be fetched as well.
      * @return User or null.
      * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
      * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
      */
     User getUserWithAttributesByLogin(@NonNull String loginAttributeIdentifier,
                                       @NonNull String login,
-                                      @NonNull List<String> attrIdentifiers)
+                                      @NonNull List<String> attrsToReturnIdentifiers)
             throws PerunUnknownException, PerunConnectionException;
 
+    /**
+     * Find user by given source IdP entityId and additional source identifiers.
+     * <br>
+     * <b>Works only with LDAP adapter!</b>
+     * @param idpIdentifier Identifier of source Identity Provider.
+     * @param identifiers List of strings containing identifiers of the user.
+     * @param attrsToReturnIdentifiers Required user's attributes to fetch.
+     * @return User or null
+     */
+    User findByIdentifiers(@NonNull String idpIdentifier,
+                           @NonNull List<String> identifiers,
+                           @NonNull List<String> attrsToReturnIdentifiers)
+    ;
 }

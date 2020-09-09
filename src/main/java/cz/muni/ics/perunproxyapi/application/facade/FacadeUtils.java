@@ -4,10 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import cz.muni.ics.perunproxyapi.persistence.adapters.DataAdapter;
 import cz.muni.ics.perunproxyapi.persistence.adapters.impl.AdaptersContainer;
+import cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue;
+import cz.muni.ics.perunproxyapi.persistence.models.User;
+import cz.muni.ics.perunproxyapi.presentation.DTOModels.UserDTO;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.validation.constraints.NotNull;
+import java.util.HashMap;
 import java.util.Map;
 
 import static cz.muni.ics.perunproxyapi.application.facade.configuration.FacadeConfiguration.ADAPTER_RPC;
@@ -81,6 +85,35 @@ public class FacadeUtils {
      */
     public static String getStringOption(String key, String defaultValue, JsonNode options) {
         return options.hasNonNull(key) ? options.get(key).asText() : defaultValue;
+    }
+
+    /**
+     * Map User object to UserDTO to be returned by API call.
+     * @param user - fetched user
+     * @return UserDTO or null
+     */
+    public static UserDTO mapUserToUserDTO(User user) {
+        if (user != null){
+            return new UserDTO(user.getLogin(), mapAttributeValuesToJsonNodes(user.getAttributes()));
+        }
+        return null;
+    }
+
+    /**
+     * Trasform PerunAttributeValue object in map to get only raw attribute value in JSONNode format.
+     * @param attrValueMap Map to be transformed with PerunAttributeValue value.
+     * @return Transformed map with JsonNode as value.
+     */
+    private static Map<String,JsonNode> mapAttributeValuesToJsonNodes(Map<String, PerunAttributeValue> attrValueMap) {
+        Map<String, JsonNode> attributes = new HashMap<>();
+        if (attrValueMap != null) {
+            attrValueMap.forEach((key, value) -> attributes.put(key, (value != null) ?
+                    value.valueAsJson() : JsonNodeFactory.instance.nullNode())
+            );
+            return attributes;
+        }
+        log.warn("No attributes found. Returning empty map.");
+        return attributes;
     }
 
 }

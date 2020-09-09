@@ -24,7 +24,7 @@ public interface ProxyUserService {
      *
      * @param preferredAdapter Adapter to be used.
      * @param idpEntityId Identifier of source Identity Provider.
-     * @param userIdentifiers List of users identifiers.
+     * @param userIdentifiers List of user's identifiers.
      * @return User or null.
      * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
      * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
@@ -116,4 +116,19 @@ public interface ProxyUserService {
     User getUserByLogin(@NonNull DataAdapter preferredAdapter, @NonNull String loginAttrIdentifier,
                         @NonNull String login) throws PerunUnknownException, PerunConnectionException;
 
+    /**
+     * Find user by given source IdP entityId and additional source identifiers.
+     * <br>
+     * <b>Works only with LDAP adapter!</b>
+     * @param adapter Adapter to be used. Only LDAP is supported.
+     * @param idpIdentifier Identifier of source Identity Provider.
+     * @param identifiers List of strings containing identifiers of the user.
+     * @param attrsToReturnIdentifiers Required user's attributes to fetch.
+     * @return User or null
+     */
+    User findByIdentifiers(@NonNull DataAdapter adapter,
+                           @NonNull String idpIdentifier,
+                           @NonNull List<String> identifiers,
+                           @NonNull List<String> attrsToReturnIdentifiers)
+    ;
 }

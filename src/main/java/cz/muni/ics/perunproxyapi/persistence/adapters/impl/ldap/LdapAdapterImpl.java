@@ -31,6 +31,7 @@ import org.springframework.ldap.core.DirContextAdapter;
 import org.springframework.ldap.filter.AndFilter;
 import org.springframework.ldap.filter.EqualsFilter;
 import org.springframework.ldap.filter.Filter;
+import org.springframework.ldap.filter.LikeFilter;
 import org.springframework.ldap.filter.OrFilter;
 import org.springframework.ldap.query.LdapQuery;
 import org.springframework.stereotype.Component;
@@ -112,6 +113,10 @@ public class LdapAdapterImpl implements DataAdapter {
     @Setter
     @Value("${attributes.identifiers.relying_party}")
     private String rpIdentifierAttrIdentifier;
+
+    @Setter
+    @Value("${attributes.identifiers.additional_identifiers}")
+    private String additionalIdentifiersAttrIdentifier;
 
     @Autowired
     public LdapAdapterImpl(@NonNull PerunConnectorLdap connectorLdap,
@@ -333,7 +338,7 @@ public class LdapAdapterImpl implements DataAdapter {
     @Override
     public User getUserWithAttributesByLogin(@NonNull String loginAttributeIdentifier,
                                              @NonNull String login,
-                                             @NonNull List<String> attrIdentifiers)
+                                             @NonNull List<String> attrsToReturnIdentifiers)
     {
         AttributeObjectMapping loginMapping = this.getMappingForAttrName(loginAttributeIdentifier);
         if (loginMapping == null || !StringUtils.hasText(loginMapping.getRpcName())) {
@@ -341,18 +346,8 @@ public class LdapAdapterImpl implements DataAdapter {
                     loginAttributeIdentifier, loginMapping);
             throw new IllegalArgumentException("Cannot fetch unknown attribute");
         }
-        Set<AttributeObjectMapping> attrMappings = this.getMappingsForAttrNames(attrIdentifiers);
-        if (attrMappings == null) {
-            attrMappings = new HashSet<>();
-        }
-        final Set<AttributeObjectMapping> finalMappings = attrMappings.stream()
-                .filter(mapping -> {
-                    if (!StringUtils.hasText(mapping.getLdapName())) {
-                        log.warn("No LDAP name found in mapping {}", mapping);
-                        return false;
-                    }
-                    return true;
-                }).collect(Collectors.toSet());
+
+        final Set<AttributeObjectMapping> finalMappings = this.getFinalAttrMapping(attrsToReturnIdentifiers);
         Filter filter = new AndFilter()
                 .and(new EqualsFilter(OBJECT_CLASS, PERUN_USER))
                 .and(new EqualsFilter(loginMapping.getLdapName(), login));
@@ -470,6 +465,47 @@ public class LdapAdapterImpl implements DataAdapter {
         }
         return new ArrayList<>(this.getCapabilities(facilityId, resourceCapabilitiesAttrIdentifier,
                 facilityCapabilitiesAttrIdentifier, partialFilter));
+    }
+
+    @Override
+    public User findByIdentifiers(@NonNull String idpIdentifier,
+                                  @NonNull List<String> identifiers,
+                                  @NonNull List<String> attrsToReturnIdentifiers) {
+        AttributeObjectMapping additIdMapping = this.getMappingForAttrName(additionalIdentifiersAttrIdentifier);
+        if (additIdMapping == null || !StringUtils.hasText(additIdMapping.getLdapName())) {
+            log.error("Cannot look for users, name of the LDAP attribute is unknown for identifier {} (mapping:{})",
+                    additionalIdentifiersAttrIdentifier, additIdMapping);
+            throw new IllegalArgumentException("Cannot fetch unknown attribute");
+        }
+
+        Set<AttributeObjectMapping> attrMappings = this.getMappingsForAttrNames(attrsToReturnIdentifiers);
+        if (attrMappings == null) {
+            attrMappings = new HashSet<>();
+        }
+        final Set<AttributeObjectMapping> finalMappings = attrMappings.stream()
+                .filter(mapping -> {
+                    if (!StringUtils.hasText(mapping.getLdapName())) {
+                        log.warn("No LDAP name found in mapping {}", mapping);
+                        return false;
+                    }
+                    return true;
+                }).collect(Collectors.toSet());
+
+
+        OrFilter orFilter = new OrFilter();
+        for (String identifier : identifiers) {
+            orFilter.or(new LikeFilter(additIdMapping.getLdapName(), identifier));
+        }
+        AndFilter andFilter = new AndFilter().and(orFilter).and(new EqualsFilter(OBJECT_CLASS,PERUN_USER));
+
+        LdapQuery ldapQuery = query()
+                .base(OU_PEOPLE)
+                .attributes(this.constructUserAttributes(finalMappings))
+                .searchScope(ONELEVEL)
+                .filter(andFilter);
+
+        ContextMapper<User> mapper = this.userMapper(new HashSet<>());
+        return connectorLdap.searchForObject(ldapQuery, mapper);
     }
 
     // private methods
@@ -899,6 +935,22 @@ public class LdapAdapterImpl implements DataAdapter {
         };
 
         return connectorLdap.searchForObject(query, mapper);
+    }
+
+    private Set<AttributeObjectMapping> getFinalAttrMapping(List<String> attrIdentifiers) {
+        Set<AttributeObjectMapping> attrMappings = this.getMappingsForAttrNames(attrIdentifiers);
+        if (attrMappings == null) {
+            attrMappings = new HashSet<>();
+        }
+
+        return attrMappings.stream()
+                .filter(mapping -> {
+                    if (!StringUtils.hasText(mapping.getLdapName())) {
+                        log.warn("No LDAP name found in mapping {}", mapping);
+                        return false;
+                    }
+                    return true;
+                }).collect(Collectors.toSet());
     }
 
 }
