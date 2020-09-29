@@ -21,6 +21,8 @@ Example:
 ```
 
 ## [Unreleased]
+
+## [v0.1.0]
 ### Added
 - Add GET API method /proxy-user/findByExtLogins
 - Add GET API method /proxy-user/findByIdentifiers
@@ -30,4 +32,5 @@ Example:
 - Add PUT API method /proxy-user/{login}/identity
 - Add GET API method /relying-party/{rp-identifier}/proxy-user/{login}/entitlements
 
+[v0.1.0]: https://github.com/CESNET/perun-proxy-api/commits/tree/v0.1.0
 [Unreleased]: https://github.com/CESNET/perun-proxy-api/commits/master
