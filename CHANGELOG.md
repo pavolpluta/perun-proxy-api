@@ -21,6 +21,8 @@ Example:
 ```
 
 ## [Unreleased]
+
+## [v0.1.1]
 ### Changed
 - Method /proxy-user/findByPerunUserId now accepts passing fields from the request
 - Improved logging in Connectors and AttributeObjectMapping
@@ -40,5 +42,6 @@ Example:
 - Add PUT API method /proxy-user/{login}/identity
 - Add GET API method /relying-party/{rp-identifier}/proxy-user/{login}/entitlements
 
+[v0.1.1]: https://github.com/CESNET/perun-proxy-api/commits/tree/v0.1.1
 [v0.1.0]: https://github.com/CESNET/perun-proxy-api/commits/tree/v0.1.0
 [Unreleased]: https://github.com/CESNET/perun-proxy-api/commits/master
