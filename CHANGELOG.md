@@ -21,6 +21,14 @@ Example:
 ```
 
 ## [Unreleased]
+### Changed
+- Method /proxy-user/findByPerunUserId now accepts passing fields from the request
+- Improved logging in Connectors and AttributeObjectMapping
+
+### Fixed
+- Fixed bug in method /proxy-user/findByIdentifiers
+    - Use exact match in one of the values instead of like
+      matching
 
 ## [v0.1.0]
 ### Added
