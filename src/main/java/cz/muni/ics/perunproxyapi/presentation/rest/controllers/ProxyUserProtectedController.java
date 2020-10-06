@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,10 +48,9 @@ public class ProxyUserProtectedController {
     public static final String LOGIN = "login";
     public static final String FIELDS = "fields";
     public static final String USER_ID = "userId";
-    public static final String IDENTITY_ID = "identityId";
+    public static final String ATTRIBUTES = "attributes";
 
     private final ProxyuserFacade facade;
-
 
     @Autowired
     public ProxyUserProtectedController(ProxyuserFacade facade) {
@@ -58,12 +58,16 @@ public class ProxyUserProtectedController {
     }
 
     /**
-     * Find user by logins provided by the external sources.
+     * Find user by logins provided by the external sources and get specified attributes.
+     * If no attributes are specified, default set is fetched.
      *
      * EXAMPLE CURL:
-     * curl --request GET --url 'http://127.0.0.1:8081/proxyapi/auth/proxy-user/findByExtLogins?IdPIdentifier=
-     * identifier&identifiers=id1&identifiers=id2'
-     * --header 'authorization: Basic auth'
+     * curl --request GET \
+     *   --url 'http://127.0.0.1/proxyapi/auth/proxy-user/findByExtLogins?\
+     *   IdPIdentifier=aHR0cHM6Ly9sb2dpbi5jZXNuZXQuY3ovaWRwLw%3D%3D\
+     *   &identifiers=id1&identifiers=id2\
+     *   &fields=urn%3Aperun%3Auser%3Aattribute-def%3Adef%3Aattr1&fields=urn%3Aperun%3Auser%3Aattribute-def%3Adef%3Aattr2' \
+     *   --header 'authorization: Basic auth' \
      *
      * @param idpIdentifier Identifier of the identity provider (external source identifier).
      * @param identifiers List of user identifiers at the given identity provider.
@@ -76,7 +80,8 @@ public class ProxyUserProtectedController {
     @ResponseBody
     @GetMapping(value = "/findByExtLogins", produces = APPLICATION_JSON_VALUE)
     public UserDTO findByExtLogins(@RequestParam(value = IDP_IDENTIFIER) String idpIdentifier,
-                                   @RequestParam(value = IDENTIFIERS) List<String> identifiers)
+                                   @RequestParam(value = IDENTIFIERS) List<String> identifiers,
+                                   @RequestParam(value = FIELDS, required = false) List<String> fields)
             throws PerunUnknownException, PerunConnectionException, EntityNotFoundException,
             InvalidRequestParameterException
     {
@@ -85,8 +90,55 @@ public class ProxyUserProtectedController {
         } else if (identifiers == null || identifiers.isEmpty()) {
             throw new InvalidRequestParameterException("User identifiers cannot be empty");
         }
+        String decodedIdpIdentifier = ControllerUtils.decodeUrlSafeBase64(idpIdentifier);
+        return facade.findByExtLogins(decodedIdpIdentifier, identifiers, fields);
+    }
 
-        return facade.findByExtLogins(idpIdentifier, identifiers);
+    /**
+     * Find user by logins provided by the external sources and get specified attributes.
+     * If no attributes are specified, default set is fetched.
+     *
+     * EXAMPLE CURL:
+     * curl --request POST --url http://localhost:8081/proxyapi/auth/proxy-user/findByExtLogins \
+     *   --header 'authorization: Basic auth' \
+     *   --header 'content-type: application/json' \
+     *   --data '{
+     *             "IdPIdentifier": "aksn64a6sdsgsd48s123",
+     *             "identifiers": ["id1", "445348@muni.cz", "id2"],
+     *             "fields": [
+     *               "urn:perun:user:attribute-def:def:attr1",
+     *               "urn:perun:user:attribute-def:def:attr2",
+     *              ]
+     *           }'
+     *
+     * @param body Request body. JSON containing fields:
+     *             - fields: List of strings identifying attributes we want to fetch. OPTIONAL
+     * @return Found user or NULL.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     * @throws EntityNotFoundException Thrown when no user has been found.
+     * @throws InvalidRequestParameterException Thrown when passed parameters or body does not meet criteria.
+     */
+    @ResponseBody
+    @PostMapping(value = "/findByExtLogins", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+    public UserDTO findByExtLogins(@RequestBody JsonNode body)
+            throws PerunUnknownException, PerunConnectionException, EntityNotFoundException,
+            InvalidRequestParameterException
+    {
+        ControllerUtils.validateRequestBody(body);
+        String idpIdentifier = ControllerUtils.extractRequiredString(body, IDP_IDENTIFIER);
+        if (!StringUtils.hasText(idpIdentifier)) {
+            throw new InvalidRequestParameterException("IdP identifier cannot be empty");
+        }
+        String decodedIdpIdentifier = ControllerUtils.decodeUrlSafeBase64(idpIdentifier);
+
+        List<String> identifiers = ControllerUtils.extractRequiredListOfStrings(body, IDENTIFIERS);
+        if (identifiers.isEmpty()) {
+            throw new InvalidRequestParameterException("User identifiers cannot be empty");
+        }
+        List<String> fields = ControllerUtils.extractFieldsFromBody(body, FIELDS);
+
+        return facade.findByExtLogins(decodedIdpIdentifier, identifiers, fields);
     }
 
     /**
@@ -95,9 +147,10 @@ public class ProxyUserProtectedController {
      *
      * EXAMPLE CURL:
      * curl --request GET \
-     *   --url http://localhost:8081/proxyapi/auth/proxy-user/findByIdentifiers?IdPIdentifier=IDP1 \
-     *   &identifiers=ID1&identifiers=ID2 \
-     *   --header 'authorization: Basic auth'
+     *   --url http://127.0.0.1/proxyapi/auth/proxy-user/findByIdentifiers?IdPIdentifier=IDP1 \
+     *   &identifiers=ID1&identifiers=ID2\
+     *   &fields=urn%3Aperun%3Auser%3Aattribute-def%3Adef%3Aattr1&fields=urn%3Aperun%3Auser%3Aattribute-def%3Adef%3Aattr2' \
+     *   --header 'authorization: Basic auth' \
      *
      * @param idpIdentifier Identifier of source Identity Provider.
      * @param identifiers List of string containing identifiers of the user.
@@ -108,7 +161,8 @@ public class ProxyUserProtectedController {
     @ResponseBody
     @GetMapping(value = "/findByIdentifiers", produces = APPLICATION_JSON_VALUE)
     public UserDTO findByIdentifiers(@RequestParam(value = IDP_IDENTIFIER) String idpIdentifier,
-                                     @RequestParam(value = IDENTIFIERS) List<String> identifiers)
+                                     @RequestParam(value = IDENTIFIERS) List<String> identifiers,
+                                     @RequestParam(value = FIELDS, required = false) List<String> fields)
             throws EntityNotFoundException, InvalidRequestParameterException
     {
         if (!StringUtils.hasText(idpIdentifier)) {
@@ -116,19 +170,63 @@ public class ProxyUserProtectedController {
         } else if (identifiers == null || identifiers.isEmpty()) {
             throw new InvalidRequestParameterException("User identifiers cannot be empty");
         }
-        return facade.findByIdentifiers(idpIdentifier, identifiers);
+        String decodedIdpIdentifier = ControllerUtils.decodeUrlSafeBase64(idpIdentifier);
+        return facade.findByIdentifiers(decodedIdpIdentifier, identifiers, fields);
     }
 
     /**
-     * Get Perun user by login.
+     * Find user by given source IdP entityId and additional source identifiers.
+     * !!!! Works only with LDAP adapter !!!!
      *
      * EXAMPLE CURL:
-     * curl --request GET \
-     *   --url http://localhost:8081/proxyapi/auth/proxy-user/example_login_value@einfra.cesnet.cz \
+     * curl --request POST --url http://localhost:8081/proxyapi/auth/proxy-user/findByIdentifiers \
+     *   --header 'authorization: Basic auth' \
+     *   --header 'content-type: application/json' \
+     *   --data '{
+     *             "IdPIdentifier": "aksn64a6sdsgsd48s123",
+     *             "identifiers": ["id1", "445348@muni.cz", "id2"],
+     *             "fields": [
+     *               "urn:perun:user:attribute-def:def:attr1",
+     *               "urn:perun:user:attribute-def:def:attr2",
+     *              ]
+     *           }'
+     *
+     * @param body Request body. JSON containing fields:
+     *             - fields: List of strings identifying attributes we want to fetch. OPTIONAL
+     * @return User or null.
+     * @throws EntityNotFoundException Thrown when no user has been found.
+     * @throws InvalidRequestParameterException Thrown when passed parameters or body does not meet criteria.
+     */
+    @ResponseBody
+    @PostMapping(value = "/findByIdentifiers", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+    public UserDTO findByIdentifiers(@RequestBody JsonNode body)
+            throws EntityNotFoundException, InvalidRequestParameterException
+    {
+        ControllerUtils.validateRequestBody(body);
+        String idpIdentifier = ControllerUtils.extractRequiredString(body, IDP_IDENTIFIER);
+        if (!StringUtils.hasText(idpIdentifier)) {
+            throw new InvalidRequestParameterException("IdP identifier cannot be empty");
+        }
+        String decodedIdpIdentifier = ControllerUtils.decodeUrlSafeBase64(idpIdentifier);
+        List<String> identifiers = ControllerUtils.extractRequiredListOfStrings(body, IDENTIFIERS);
+        if (identifiers.isEmpty()) {
+            throw new InvalidRequestParameterException("User identifiers cannot be empty");
+        }
+        List<String> fields = ControllerUtils.extractFieldsFromBody(body, FIELDS);
+
+        return facade.findByIdentifiers(decodedIdpIdentifier, identifiers, fields);
+    }
+
+    /**
+     * Get Perun user by login with specified attributes. If no attributes are specified, default set is fetched.
+     *
+     * EXAMPLE CURL:
+     * curl --request GET --url http://127.0.0.1/proxyapi/auth/proxy-user/login@somewhere.org?\
+     *   fields=urn%3Aperun%3Auser%3Aattribute-def%3Adef%3Aattr1&fields=urn%3Aperun%3Auser%3Aattribute-def%3Adef%3Aattr2' \
      *   --header 'authorization: Basic auth'
      *
-     * @param login Login attribute to be used. Must be unique.
-     * @param fields OPTIONAL attributes for the user we want to obtain
+     * @param login Login of the user.
+     * @param fields List of attributes to be fetched.
      * @return JSON representation of the User object.
      * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
      * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
@@ -138,7 +236,7 @@ public class ProxyUserProtectedController {
     @ResponseBody
     @GetMapping(value = "/{login}", produces = MediaType.APPLICATION_JSON_VALUE)
     public UserDTO getUserByLogin(@PathVariable(value = LOGIN) String login,
-                                  @RequestParam(required = false, value = FIELDS) List<String> fields)
+                                  @RequestParam(value = FIELDS, required = false) List<String> fields)
             throws PerunUnknownException, PerunConnectionException, EntityNotFoundException,
             InvalidRequestParameterException
     {
@@ -149,14 +247,52 @@ public class ProxyUserProtectedController {
     }
 
     /**
-     * Find Perun user by its id.
+     * Get Perun user by login with specified attributes. If no attributes are specified, default set is fetched.
      *
      * EXAMPLE CURL:
-     * curl --request GET --url 'http://127.0.0.1:8081/proxyapi/auth/proxy-user/findByPerunUserId?userId=12345'
-     * --header 'authorization: Basic auth'
+     * curl --request POST \
+     *   --url http://127.0.0.1/proxyapi/auth/proxy-user/login@somewhere.org \
+     *   --header 'content-type: application/json' \
+     *   --data '{
+     *             "fields": [
+     *               "urn:perun:user:attribute-def:def:attr1",
+     *               "urn:perun:user:attribute-def:def:attr2",
+     *               "urn:perun:user:attribute-def:def:attr3"
+     *             ]
+     *          }'
+     *
+     * @param login Login of the user.
+     * @param body Request body. JSON containing fields:
+     *             - fields: List of strings identifying attributes we want to fetch. OPTIONAL
+     * @return JSON representation of the User object.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     * @throws EntityNotFoundException Thrown when no user has been found.
+     * @throws InvalidRequestParameterException Thrown when passed parameters or body does not meet criteria.
+     */
+    @ResponseBody
+    @PostMapping(value = "/{login}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public UserDTO getUserByLogin(@PathVariable(value = LOGIN) String login, @RequestBody JsonNode body)
+            throws PerunUnknownException, PerunConnectionException, EntityNotFoundException,
+            InvalidRequestParameterException
+    {
+        if (!StringUtils.hasText(login)) {
+            throw new InvalidRequestParameterException("IdP identifier cannot be empty");
+        }
+        List<String> fields = ControllerUtils.extractFieldsFromBody(body, FIELDS);
+        return facade.getUserByLogin(login, fields);
+    }
+
+    /**
+     * Find Perun user by id and get specified attributes. If no attributes are specified, default set is fetched.
+     *
+     * EXAMPLE CURL:
+     * curl --request GET --url 'http://127.0.0.1/proxyapi/auth/proxy-user/findByPerunUserId?userId=12345\
+     *   &fields=urn%3Aperun%3Auser%3Aattribute-def%3Adef%3Aattr1&fields=urn%3Aperun%3Auser%3Aattribute-def%3Adef%3Aattr2' \
+     *   --header 'authorization: Basic auth' \
      *
      * @param userId Id of a Perun user.
-     * @param fields OPTIONAL attributes for the user we want to obtain
+     * @param fields List of attributes we want to fetch.
      * @return JSON representation of the User object.
      * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
      * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
@@ -166,7 +302,7 @@ public class ProxyUserProtectedController {
     @ResponseBody
     @GetMapping(value = "/findByPerunUserId", produces = APPLICATION_JSON_VALUE)
     public UserDTO findByPerunUserId(@RequestParam(value = USER_ID) Long userId,
-                                     @RequestParam(required = false, value = FIELDS) List<String> fields)
+                                     @RequestParam(value = FIELDS, required = false) List<String> fields)
             throws PerunUnknownException, PerunConnectionException, EntityNotFoundException,
             InvalidRequestParameterException
     {
@@ -177,10 +313,37 @@ public class ProxyUserProtectedController {
     }
 
     /**
+     * Find Perun user by id and get specified attributes. If no attributes are specified, default set is fetched.
+     *
+     * EXAMPLE CURL:
+     * curl --request GET --url 'http://127.0.0.1/proxyapi/auth/proxy-user/findByPerunUserId?userId=12345'
+     * --header 'authorization: Basic auth'
+     *
+     * @param body Request body. JSON containing fields:
+     *             - userId: Id of user in Perun. REQUIRED
+     *             - fields: List of strings identifying attributes we want to fetch. OPTIONAL
+     * @return JSON representation of the User object.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     * @throws EntityNotFoundException Thrown when no user has been found.
+     * @throws InvalidRequestParameterException Thrown when passed parameters or body does not meet criteria.
+     */
+    @ResponseBody
+    @PostMapping(value = "/findByPerunUserId", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+    public UserDTO findByPerunUserId(@RequestBody JsonNode body)
+            throws PerunUnknownException, PerunConnectionException, EntityNotFoundException,
+            InvalidRequestParameterException
+    {
+        Long userId = ControllerUtils.extractRequiredLong(body, USER_ID);
+        List<String> fields = ControllerUtils.extractFieldsFromBody(body, FIELDS);
+        return facade.findByPerunUserId(userId, fields);
+    }
+
+    /**
      * Get all entitlements for user with given login.
      *
      * EXAMPLE CURL:
-     * curl --request GET --url 'http://127.0.0.1:8081/proxyapi/auth/proxy-user/login@somewhere.org/entitlements
+     * curl --request GET --url 'http://127.0.0.1/proxyapi/auth/proxy-user/login@somewhere.org/entitlements
      * --header 'authorization: Basic auth'
      *
      * @param login Login of the user.
@@ -203,40 +366,52 @@ public class ProxyUserProtectedController {
     }
 
     /**
-     * Update UserExtSource attributes
-     * @param login of the user
-     * @param identityId the id of the identity provider
-     * @param body the body containing UserExtSource attributes to be updated
+     * Update attributes of the external source.
+     *
+     * curl --request PUT \
+     *   --url http://127.0.0.1/proxyapi/auth/proxy-user/{login}/identity/{IdPIdentifier} \
+     *   --header 'authorization: Basic auth' \
+     *   --header 'content-type: application/json' \
+     *   --data '{
+     *             "attributes": {
+     *               "attr1": "val1",
+     *               "attr2": ["af1@smwh.com", "af2@smwh.com"]
+     *             }
+     *           }'
+     *
+     * @param login Login of the User.
+     * @param identityId Base64 URL safe encoded Identifier of the Identity Provider.
+     * @param body Request body. JSON containing fields:
+     *             - attributes: JSON object containing attribute names and values to be updated. REQUIRED
      * @return true if the attributes were updated properly, false otherwise
      * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
      * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
      */
     @ResponseBody
-    @PutMapping(value = "/{login}/identity",
+    @PutMapping(value = "/{login}/identity/{IdPIdentifier}",
             produces = APPLICATION_JSON_VALUE,
             consumes = APPLICATION_JSON_VALUE)
     public boolean updateUserIdentityAttributes(@PathVariable(value = LOGIN) String login,
-                                                @RequestParam(value = IDENTITY_ID) String identityId,
+                                                @PathVariable(value = IDP_IDENTIFIER) String identityId,
                                                 @RequestBody JsonNode body)
             throws PerunUnknownException, PerunConnectionException, InvalidRequestParameterException
     {
-        if (body == null || !body.hasNonNull("attributes")) {
+        if (body == null || !body.hasNonNull(ATTRIBUTES)) {
             throw new InvalidRequestParameterException("The request body cannot be null and must contain attributes");
-        }
-        if (!StringUtils.hasText(login)) {
+        } else if (!StringUtils.hasText(login)) {
             throw new InvalidRequestParameterException("Users login cannot be empty");
-        }
-        if (!StringUtils.hasText(identityId)) {
+        } else if (!StringUtils.hasText(identityId)) {
             throw new InvalidRequestParameterException("identityId cannot be empty");
         }
-        ObjectNode jsonAttributes = (ObjectNode) body.get("attributes");
+        String decodedIdentityIdentifier = ControllerUtils.decodeUrlSafeBase64(identityId);
+        ObjectNode jsonAttributes = (ObjectNode) body.get(ATTRIBUTES);
         Map<String, JsonNode> attributes = new HashMap<>();
         Iterator<String> it = jsonAttributes.fieldNames();
         while (it.hasNext()) {
             String fieldName = it.next();
             attributes.put(fieldName, jsonAttributes.get(fieldName));
         }
-        return facade.updateUserIdentityAttributes(login, identityId, attributes);
+        return facade.updateUserIdentityAttributes(login, decodedIdentityIdentifier, attributes);
     }
 
 }
