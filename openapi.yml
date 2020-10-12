@@ -14,14 +14,16 @@ components:
     Attributes:
       type: object
       additionalProperties:
-        type:
-          anyOf:
-            - string
-            - boolean
-            - object
-            - array
-            - int
-        example: "value"
+        anyOf:
+          - type: string
+            example: "value"
+          - type: integer
+            example: 25
+          - type: boolean
+            example: true
+          - type: array
+            example: ["value1", "value2"]
+          - type: object
       example:
         "urn:attribute:name:1": 12354
         "urn:attribute:name:2": "value2"
@@ -46,7 +48,6 @@ components:
       properties:
         fields:
           $ref: '#/components/schemas/Fields'
-      required: []
     Fields:
       type: array
       items:
@@ -72,7 +73,7 @@ components:
       type: object
       properties:
         userId:
-          type: int
+          type: integer
           example: 123456
         fields:
           $ref: '#/components/schemas/Fields'
