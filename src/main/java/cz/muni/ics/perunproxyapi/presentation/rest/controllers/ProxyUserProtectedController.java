@@ -414,4 +414,56 @@ public class ProxyUserProtectedController {
         return facade.updateUserIdentityAttributes(login, decodedIdentityIdentifier, attributes);
     }
 
+    /**
+     * Get all GA4GH Visas and Passports for user with given Perun ID.
+     *
+     * EXAMPLE CURL:
+     * curl --request GET --url 'http://127.0.0.1:8081/proxyapi/auth/proxy-user/ga4gh?userId=12345
+     * --header 'authorization: Basic auth'
+     *
+     * @param userId Id of user in Perun
+     * @return List of all GA4GH Passports and Visas.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     * @throws EntityNotFoundException Thrown when no user has been found.
+     * @throws InvalidRequestParameterException Thrown when passed parameters or body does not meet criteria.
+     */
+    @ResponseBody
+    @GetMapping(value = "/ga4gh", produces = APPLICATION_JSON_VALUE)
+    public JsonNode ga4ghById(@RequestParam(value = USER_ID) Long userId)
+            throws PerunConnectionException, PerunUnknownException, EntityNotFoundException,
+            InvalidRequestParameterException
+    {
+        if (userId == null || userId <= 0) {
+            throw new InvalidRequestParameterException("Invalid ID for user");
+        }
+        return facade.ga4ghById(userId);
+    }
+
+    /**
+     * Get all GA4GH Visas and Passports for user with given login.
+     *
+     * EXAMPLE CURL:
+     * curl --request GET --url 'http://127.0.0.1:8081/proxyapi/auth/proxy-user/ga4gh?userId=12345
+     * --header 'authorization: Basic auth'
+     *
+     * @param login Users login
+     * @return List of all GA4GH Passports and Visas.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     * @throws EntityNotFoundException Thrown when no user has been found.
+     * @throws InvalidRequestParameterException Thrown when passed parameters or body does not meet criteria.
+     */
+    @ResponseBody
+    @GetMapping(value = "/{login}/ga4gh", produces = APPLICATION_JSON_VALUE)
+    public JsonNode ga4ghByLogin(@PathVariable(value = LOGIN) String login)
+            throws PerunConnectionException, PerunUnknownException, EntityNotFoundException,
+            InvalidRequestParameterException
+    {
+        if (!StringUtils.hasText(login)) {
+            throw new InvalidRequestParameterException("Users login cannot be empty");
+        }
+        return facade.ga4ghByLogin(login);
+    }
+
 }

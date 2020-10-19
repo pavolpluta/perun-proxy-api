@@ -18,6 +18,7 @@ import cz.muni.ics.perunproxyapi.persistence.models.UpdateAttributeMappingEntry;
 import cz.muni.ics.perunproxyapi.persistence.models.User;
 import cz.muni.ics.perunproxyapi.persistence.models.UserExtSource;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -35,6 +36,7 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 @Component
+@Slf4j
 public class ProxyUserServiceImpl implements ProxyUserService {
 
     public static final String UES_VALUES_SEPARATOR = ";";
@@ -305,7 +307,7 @@ public class ProxyUserServiceImpl implements ProxyUserService {
 
     private List<PerunAttribute> getAttributesToUpdate(@NonNull Map<String, PerunAttribute> oldValuesMap,
                                                        @NonNull Map<String, JsonNode> newValuesMap,
-                                       @NonNull Map<String, UpdateAttributeMappingEntry> internalToAttrMappingEntries)
+                                                       @NonNull Map<String, UpdateAttributeMappingEntry> internalToAttrMappingEntries)
     {
         List<PerunAttribute> attributesToUpdateList = new ArrayList<>();
 

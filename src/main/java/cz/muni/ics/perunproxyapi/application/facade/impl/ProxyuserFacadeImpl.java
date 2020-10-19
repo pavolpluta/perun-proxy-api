@@ -7,6 +7,7 @@ import cz.muni.ics.perunproxyapi.application.facade.FacadeUtils;
 import cz.muni.ics.perunproxyapi.application.facade.ProxyuserFacade;
 import cz.muni.ics.perunproxyapi.application.facade.configuration.FacadeConfiguration;
 import cz.muni.ics.perunproxyapi.application.service.ProxyUserService;
+import cz.muni.ics.perunproxyapi.ga4gh.service.Ga4ghService;
 import cz.muni.ics.perunproxyapi.persistence.adapters.DataAdapter;
 import cz.muni.ics.perunproxyapi.persistence.adapters.FullAdapter;
 import cz.muni.ics.perunproxyapi.persistence.adapters.impl.AdaptersContainer;
@@ -39,6 +40,7 @@ public class ProxyuserFacadeImpl implements ProxyuserFacade {
     public static final String FIND_BY_PERUN_USER_ID = "find_by_perun_user_id";
     public static final String GET_ALL_ENTITLEMENTS = "get_all_entitlements";
     public static final String UPDATE_USER_IDENTITY_ATTRIBUTES = "update_user_identity_attributes";
+    public static final String GA4GH = "ga4gh";
 
     public static final String PREFIX = "prefix";
     public static final String AUTHORITY = "authority";
@@ -49,15 +51,18 @@ public class ProxyuserFacadeImpl implements ProxyuserFacade {
     private final Map<String, JsonNode> methodConfigurations;
     private final AdaptersContainer adaptersContainer;
     private final ProxyUserService proxyUserService;
+    private final Ga4ghService ga4ghService;
 
     @Autowired
     public ProxyuserFacadeImpl(@NonNull ProxyUserService proxyUserService,
                                @NonNull AdaptersContainer adaptersContainer,
-                               @NonNull FacadeConfiguration facadeConfiguration)
+                               @NonNull FacadeConfiguration facadeConfiguration,
+                               @NonNull Ga4ghService ga4ghService)
     {
         this.proxyUserService = proxyUserService;
         this.adaptersContainer = adaptersContainer;
         this.methodConfigurations = facadeConfiguration.getProxyUserAdapterMethodConfigurations();
+        this.ga4ghService = ga4ghService;
     }
 
     @Override
@@ -189,6 +194,34 @@ public class ProxyuserFacadeImpl implements ProxyuserFacade {
                 mapper, externalToInternal, searchAttributes);
     }
 
+    @Override
+    public JsonNode ga4ghById(@NonNull Long userId)
+            throws PerunUnknownException, PerunConnectionException, EntityNotFoundException
+    {
+        return ga4gh(userId, null);
+    }
+
+    @Override
+    public JsonNode ga4ghByLogin(@NonNull String login)
+            throws PerunUnknownException, PerunConnectionException, EntityNotFoundException
+    {
+        return ga4gh(null, login);
+    }
+
+    private JsonNode ga4gh(Long perunUserId, String userLogin) throws PerunConnectionException, PerunUnknownException,
+            EntityNotFoundException
+    {
+        FullAdapter adapter = FacadeUtils.getFullAdapter(adaptersContainer);
+        if (perunUserId == null) {
+            User user = proxyUserService.getUserByLogin(adapter, userLogin);
+            if (user == null) {
+                throw new EntityNotFoundException("No user found for given login");
+            }
+            perunUserId = user.getPerunId();
+        }
+        return ga4ghService.getPassportsAndVisas(adapter, perunUserId);
+    }
+
     private List<String> getFields(List<String> fields, String method, JsonNode options) {
         return (fields != null) ? fields : this.getDefaultFields(method, options);
     }
@@ -209,6 +242,7 @@ public class ProxyuserFacadeImpl implements ProxyuserFacade {
                 }
             }
         }
+
         return fields;
     }
 

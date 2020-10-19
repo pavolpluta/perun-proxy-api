@@ -1,7 +1,7 @@
 package cz.muni.ics.perunproxyapi.application.facade;
 
-import cz.muni.ics.perunproxyapi.persistence.exceptions.EntityNotFoundException;
 import com.fasterxml.jackson.databind.JsonNode;
+import cz.muni.ics.perunproxyapi.persistence.exceptions.EntityNotFoundException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.presentation.DTOModels.UserDTO;
@@ -93,5 +93,28 @@ public interface ProxyuserFacade {
                                          @NonNull String identityId,
                                          @NonNull Map<String, JsonNode> requestAttributes)
             throws PerunUnknownException, PerunConnectionException;
+
+    /**
+     * Get GA4GH Visas and passports based on the user's ID
+     *
+     * @param userId id of a user
+     * @return GA4GH Visas and passport as a JsonNode
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    JsonNode ga4ghById(@NonNull Long userId)
+            throws PerunUnknownException, PerunConnectionException, EntityNotFoundException;
+
+    /**
+     * Get GA4GH Visas and passports based on the user's login.
+     *
+     * @param login login of a user
+     * @return GA4GH Visas and passport as a JsonNode
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     * @throws EntityNotFoundException Thrown when no user has been found.
+     */
+    JsonNode ga4ghByLogin(@NonNull String login)
+            throws PerunUnknownException, PerunConnectionException, EntityNotFoundException;
 
 }
