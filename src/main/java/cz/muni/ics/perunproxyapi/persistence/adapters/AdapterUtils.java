@@ -1,5 +1,6 @@
 package cz.muni.ics.perunproxyapi.persistence.adapters;
 
+import cz.muni.ics.perunproxyapi.persistence.adapters.impl.rpc.RpcAdapterImpl;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.AttributeObjectMapping;
@@ -11,6 +12,7 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+import static cz.muni.ics.perunproxyapi.persistence.enums.Entity.FACILITY;
 import static cz.muni.ics.perunproxyapi.persistence.enums.Entity.USER;
 
 /**
@@ -76,4 +78,51 @@ public class AdapterUtils {
         return mapping.getRpcName();
     }
 
+    /**
+     * Extract checkGroupAttribute attribute from the facility.
+     * @param dataAdapter Adapter to be used.
+     * @param facilityId Facility id.
+     * @param checkGroupMembershipAttrIdentifier checkGroupMembership attribute.
+     * @return Boolean value of the checkGroupMembership attribute. If attribute does not exist, returns FALSE.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    public static boolean checkGroupMembership(@NonNull DataAdapter dataAdapter,
+                                               @NonNull Long facilityId,
+                                               String checkGroupMembershipAttrIdentifier)
+            throws PerunUnknownException, PerunConnectionException{
+        if (!StringUtils.hasText(checkGroupMembershipAttrIdentifier)) {
+            return false;
+        }
+
+        PerunAttributeValue attributeValue = dataAdapter.getAttributeValue(FACILITY, facilityId, checkGroupMembershipAttrIdentifier);
+        if (attributeValue != null) {
+            return attributeValue.valueAsBoolean();
+        }
+
+        return false;
+    }
+
+    /**
+     * Extract isTestSp attribute from the facility.
+     * @param dataAdapter Adapter to be used.
+     * @param facilityId Facility id.
+     * @param isTestSpIdentifier Identifier of the isTestSp attribute.
+     * @return TRUE if facility is test service provider. If facility is production SP, return FALSE.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    public static boolean isTestSp(DataAdapter dataAdapter, Long facilityId, String isTestSpIdentifier)
+            throws PerunUnknownException, PerunConnectionException {
+        if (!StringUtils.hasText(isTestSpIdentifier)) {
+            return false;
+        }
+
+        PerunAttributeValue attributeValue = dataAdapter.getAttributeValue(FACILITY, facilityId, isTestSpIdentifier);
+        if (attributeValue != null) {
+            return attributeValue.valueAsBoolean();
+        }
+
+        return false;
+    }
 }

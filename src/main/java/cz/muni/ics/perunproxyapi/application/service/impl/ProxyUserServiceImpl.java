@@ -11,6 +11,7 @@ import cz.muni.ics.perunproxyapi.persistence.exceptions.InternalErrorException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.Group;
+import cz.muni.ics.perunproxyapi.persistence.models.Member;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttribute;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValueAwareModel;
@@ -173,6 +174,13 @@ public class ProxyUserServiceImpl implements ProxyUserService {
         }
         boolean lastAccessUpdated = adapter.updateUserExtSourceLastAccess(ues);
         return attributesUpdated && lastAccessUpdated;
+    }
+
+    @Override
+    public List<Member> getMembersByUser(@NonNull DataAdapter adapter, @NonNull Long userId)
+            throws PerunUnknownException, PerunConnectionException
+    {
+        return adapter.getMembersByUser(userId);
     }
 
     private UserExtSource getUserExtSourceUsingIdentityId(@NonNull FullAdapter adapter, @NonNull List<String> uesAttrs,

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.util.List;
 
 import static cz.muni.ics.perunproxyapi.presentation.rest.config.PathConstants.AUTH_PATH;
@@ -74,6 +75,20 @@ public class RelyingPartyProtectedController {
         }
         String decodedRpIdentifier = ControllerUtils.decodeUrlSafeBase64(rpIdentifier);
         return facade.getEntitlements(decodedRpIdentifier, login);
+    }
+
+    @ResponseBody
+    @GetMapping(value = "/{rp-identifier}/proxy-user/{login}/access", produces = APPLICATION_JSON_VALUE)
+    public boolean hasAccessToService(@PathVariable(RP_IDENTIFIER) String rpIdentifier,
+                                      @PathVariable(LOGIN) String login)
+            throws PerunUnknownException, PerunConnectionException, InvalidRequestParameterException, EntityNotFoundException, IOException {
+        if (!StringUtils.hasText(rpIdentifier)) {
+            throw new InvalidRequestParameterException("RP identifier cannot be empty");
+        } else if (!StringUtils.hasText(login)) {
+            throw new InvalidRequestParameterException("User login cannot be empty");
+        }
+        String decodedRpIdentifier = ControllerUtils.decodeUrlSafeBase64(rpIdentifier);
+        return facade.hasAccessToService(decodedRpIdentifier, login);
     }
 
 }

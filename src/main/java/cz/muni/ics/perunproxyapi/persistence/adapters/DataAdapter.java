@@ -7,6 +7,7 @@ import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.Affiliation;
 import cz.muni.ics.perunproxyapi.persistence.models.Facility;
 import cz.muni.ics.perunproxyapi.persistence.models.Group;
+import cz.muni.ics.perunproxyapi.persistence.models.Member;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue;
 import cz.muni.ics.perunproxyapi.persistence.models.User;
 import cz.muni.ics.perunproxyapi.persistence.models.Vo;
@@ -200,4 +201,60 @@ public interface DataAdapter {
                            @NonNull List<String> identifiers,
                            @NonNull List<String> attrIdentifiers);
 
+    /**
+     * Get members for the user.
+     *
+     * @param userId Id of the user.
+     * @return Found members of the user or empty arraylist.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    List<Member> getMembersByUser(@NonNull Long userId)
+            throws PerunUnknownException, PerunConnectionException;
+
+    /**
+     * Get all assigned groups on facility.
+     *
+     * @param facilityId Facility id
+     * @return List of assigned groups or empty arraylist.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    List<Group> getAllowedGroups(@NonNull Long facilityId)
+            throws PerunUnknownException, PerunConnectionException;
+
+    /**
+     * Returns all member's groups where member is in ACTIVE state.
+     *
+     * @param memberId Member id
+     * @return List of groups where member is valid (in ACTIVE state) or empty arraylist.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    List<Group> getGroupsWhereMemberIsActive(@NonNull Long memberId)
+            throws PerunUnknownException, PerunConnectionException;
+
+    /**
+     * Get checkGroupMembership attribute from facility.
+     *
+     * @param facilityId Facility id.
+     * @param checkGroupMembershipAttrIdentifier Identifier of the checkGroupMembership attribute.
+     * @return TRUE if group membership for the facility is required. Otherwise FALSE.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    boolean checkGroupMembership(@NonNull Long facilityId, String checkGroupMembershipAttrIdentifier)
+            throws PerunUnknownException, PerunConnectionException ;
+
+    /**
+     * Get isTestSp attribute from the facility.
+     *
+     * @param facilityId Facility id.
+     * @param isTestSpIdentifier Identifier of the isTestSp attribute.
+     * @return TRUE if facility is test service provider. If facility is production SP, return FALSE.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    boolean isTestSp(@NonNull Long facilityId, String isTestSpIdentifier)
+            throws PerunUnknownException, PerunConnectionException ;
 }

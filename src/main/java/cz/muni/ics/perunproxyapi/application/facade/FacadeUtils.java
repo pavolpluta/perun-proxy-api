@@ -1,7 +1,11 @@
 package cz.muni.ics.perunproxyapi.application.facade;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import cz.muni.ics.perunproxyapi.persistence.adapters.DataAdapter;
 import cz.muni.ics.perunproxyapi.persistence.adapters.FullAdapter;
 import cz.muni.ics.perunproxyapi.persistence.adapters.impl.AdaptersContainer;
@@ -12,7 +16,9 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static cz.muni.ics.perunproxyapi.application.facade.configuration.FacadeConfiguration.ADAPTER_RPC;
@@ -96,6 +102,29 @@ public class FacadeUtils {
      */
     public static String getStringOption(String key, String defaultValue, JsonNode options) {
         return options.hasNonNull(key) ? options.get(key).asText() : defaultValue;
+    }
+
+    /**
+     * Get list of long values from method options. If option is not configured, NULL is returned.
+     *
+     * @param key Key identifying the option.
+     * @param options JSON containing the method options.
+     * @return Extracted option as list of long values.
+     * @throws IOException Invalid I/O value occurred during conversion from JSON to list of long values.
+     */
+    public static List<Long> getRequiredLongListOption(String key, JsonNode options) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectReader reader = mapper.readerFor(new TypeReference<List<Long>>() {
+        });
+
+        List<Long> values = options.hasNonNull(key) ? reader.readValue(options.get(key)) : null;
+        if (values == null) {
+            log.error("Required option {} has not been found. " +
+                    "Check your configuration.", key);
+            throw new IllegalArgumentException("Required option has not been found.");
+        }
+
+        return values;
     }
 
     /**

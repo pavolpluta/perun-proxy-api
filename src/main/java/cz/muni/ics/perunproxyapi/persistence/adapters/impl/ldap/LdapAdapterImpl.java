@@ -19,6 +19,7 @@ import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.AttributeObjectMapping;
 import cz.muni.ics.perunproxyapi.persistence.models.Facility;
 import cz.muni.ics.perunproxyapi.persistence.models.Group;
+import cz.muni.ics.perunproxyapi.persistence.models.Member;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue;
 import cz.muni.ics.perunproxyapi.persistence.models.User;
 import cz.muni.ics.perunproxyapi.persistence.models.Vo;
@@ -444,6 +445,36 @@ public class LdapAdapterImpl implements DataAdapter {
 
         ContextMapper<User> mapper = this.userWithAttributesMapper(mappings);
         return connectorLdap.searchForObject(ldapQuery, mapper);
+    }
+
+    @Override
+    public List<Member> getMembersByUser(@NonNull Long userId) throws PerunUnknownException, PerunConnectionException {
+        // TODO - check MitreID code or maybe use getUserGroups()
+        return null;
+    }
+
+    @Override
+    public List<Group> getAllowedGroups(@NonNull Long facilityId) throws PerunUnknownException, PerunConnectionException {
+        //TODO
+        Set<Long> allowedGroupsIds = this.getGroupIdsAssignedToFacility(facilityId);
+
+        return null;
+    }
+
+    @Override
+    public List<Group> getGroupsWhereMemberIsActive(@NonNull Long memberId) throws PerunUnknownException, PerunConnectionException {
+        // TODO
+        return null;
+    }
+
+    @Override
+    public boolean checkGroupMembership(Long facilityId, String checkGroupMembershipAttrIdentifier) throws PerunUnknownException, PerunConnectionException {
+        return AdapterUtils.checkGroupMembership(this, facilityId, checkGroupMembershipAttrIdentifier);
+    }
+
+    @Override
+    public boolean isTestSp(@NonNull Long facilityId, String isTestSpIdentifier) throws PerunUnknownException, PerunConnectionException {
+        return AdapterUtils.isTestSp(this, facilityId, isTestSpIdentifier);
     }
 
     // private methods

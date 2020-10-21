@@ -762,7 +762,7 @@ public class RpcAdapterImpl implements FullAdapter {
         return user;
     }
 
-    private List<Member> getMembersByUser(@NonNull Long userId) throws PerunUnknownException, PerunConnectionException {
+    public List<Member> getMembersByUser(@NonNull Long userId) throws PerunUnknownException, PerunConnectionException {
         Map<String, Object> params = new LinkedHashMap<>();
         params.put(PARAM_USER, userId);
 
@@ -770,13 +770,34 @@ public class RpcAdapterImpl implements FullAdapter {
         return RpcMapper.mapMembers(perunResponse);
     }
 
-    private List<Group> getGroupsWhereMemberIsActive(@NonNull Long memberId)
+    @Override
+    public List<Group> getAllowedGroups(@NonNull Long facilityId) throws PerunUnknownException, PerunConnectionException {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put(PARAM_FACILITY, facilityId);
+
+        JsonNode perunResponse = connectorRpc.post(FACILITIES_MANAGER, "getAllowedGroups", params);
+        return RpcMapper.mapGroups(perunResponse);
+    }
+
+    @Override
+    public List<Group> getGroupsWhereMemberIsActive(@NonNull Long memberId)
             throws PerunUnknownException, PerunConnectionException {
         Map<String, Object> params = new LinkedHashMap<>();
         params.put(PARAM_MEMBER, memberId);
 
         JsonNode perunResponse = connectorRpc.post(GROUPS_MANAGER, "getGroupsWhereMemberIsActive", params);
         return RpcMapper.mapGroups(perunResponse);
+    }
+
+    @Override
+    public boolean checkGroupMembership(@NonNull Long facilityId, String checkGroupMembershipAttrIdentifier)
+            throws PerunUnknownException, PerunConnectionException {
+        return AdapterUtils.checkGroupMembership(this, facilityId, checkGroupMembershipAttrIdentifier);
+    }
+
+    @Override
+    public boolean isTestSp(@NonNull Long facilityId, String isTestSpIdentifier) throws PerunUnknownException, PerunConnectionException {
+        return AdapterUtils.isTestSp(this, facilityId, isTestSpIdentifier);
     }
 
     private Facility returnFacility(Facility facility, String rpIdentifier) {

@@ -8,10 +8,12 @@ import cz.muni.ics.perunproxyapi.application.service.ProxyUserService;
 import cz.muni.ics.perunproxyapi.application.service.RelyingPartyService;
 import cz.muni.ics.perunproxyapi.persistence.adapters.DataAdapter;
 import cz.muni.ics.perunproxyapi.persistence.adapters.impl.AdaptersContainer;
+import cz.muni.ics.perunproxyapi.persistence.enums.MemberStatus;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.EntityNotFoundException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.Facility;
+import cz.muni.ics.perunproxyapi.persistence.models.Member;
 import cz.muni.ics.perunproxyapi.persistence.models.User;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +36,11 @@ public class RelyingPartyFacadeImpl implements RelyingPartyFacade {
     public static final String FORWARDED_ENTITLEMENTS = "forwarded_entitlements";
     public static final String RESOURCE_CAPABILITIES = "resource_capabilities";
     public static final String FACILITY_CAPABILITIES = "facility_capabilities";
+    public static final String CHECK_GROUP_MEMBERSHIP = "check_group_membership";
+    public static final String IS_TEST_SP = "is_test_sp";
+    public static final String HAS_ACCESS_TO_SERVICE = "has_access_to_service";
+    public static final String PROD_VO_IDS = "prod_vo_ids";
+    public static final String TEST_VO_IDS = "test_vo_ids";
 
     private final Map<String, JsonNode> methodConfigurations;
     private final AdaptersContainer adaptersContainer;
@@ -85,6 +93,35 @@ public class RelyingPartyFacadeImpl implements RelyingPartyFacade {
             Collections.sort(entitlements);
         }
         return entitlements;
+    }
+
+    @Override
+    public boolean hasAccessToService(@NonNull String rpIdentifier, @NonNull String login)
+            throws PerunUnknownException, PerunConnectionException, EntityNotFoundException, IOException {
+        JsonNode options = FacadeUtils.getOptions(HAS_ACCESS_TO_SERVICE, methodConfigurations);
+        DataAdapter adapter = FacadeUtils.getAdapter(adaptersContainer, options);
+
+        String checkGroupMembershipAttrIdentifier = FacadeUtils.getStringOption(CHECK_GROUP_MEMBERSHIP, options);
+        String isTestSpIdentifier = FacadeUtils.getStringOption(IS_TEST_SP, options);
+
+        Facility facility = relyingPartyService.getFacilityByIdentifier(adapter, rpIdentifier);
+        if (facility == null || facility.getId() == null) {
+            throw new EntityNotFoundException("No facility has been found for given identifier");
+        }
+
+        boolean isTestSp = relyingPartyService.isTestSp(adapter, facility.getId(), isTestSpIdentifier);
+
+        List<Long> voIds = isTestSp ? FacadeUtils.getRequiredLongListOption(TEST_VO_IDS, options) :
+                FacadeUtils.getRequiredLongListOption(PROD_VO_IDS, options);
+
+        User user = proxyUserService.getUserByLogin(adapter, login);
+        if (user == null) {
+            throw new EntityNotFoundException("No user has been found for given login");
+        }
+        List<Member> members = proxyUserService.getMembersByUser(adapter, user.getPerunId());
+
+        return relyingPartyService.hasAccessToService(adapter, facility.getId(), members, voIds,
+                checkGroupMembershipAttrIdentifier, isTestSpIdentifier);
     }
 
 }

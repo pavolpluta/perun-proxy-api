@@ -4,6 +4,7 @@ import cz.muni.ics.perunproxyapi.persistence.adapters.DataAdapter;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.Facility;
+import cz.muni.ics.perunproxyapi.persistence.models.Member;
 import lombok.NonNull;
 
 import java.util.List;
@@ -50,4 +51,32 @@ public interface RelyingPartyService {
     Facility getFacilityByIdentifier(@NonNull DataAdapter adapter, @NonNull String rpIdentifier)
             throws PerunUnknownException, PerunConnectionException;
 
+    /**
+     * Get isTestSp attribute from the facility.
+     *
+     * @param adapter Adapter to be used.
+     * @param facilityId Facility id.
+     * @param isTestSpIdentifier Identifier of the isTestSp attribute.
+     * @return TRUE if facility is test service provider. If facility is production SP, return FALSE.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    boolean isTestSp(@NonNull DataAdapter adapter, @NonNull Long facilityId, String isTestSpIdentifier)
+    throws PerunUnknownException, PerunConnectionException;
+
+    /**
+     * Check if user has access to the service.
+     *
+     * @param adapter Adapter to be used
+     * @param facilityId Facility id.
+     * @param members Members of the user.
+     * @param voIds IDs of VOs.
+     * @param checkGroupMembershipAttrIdentifier Identifier for the checkGroupMembershipAttribute attribute.
+     * @param isTestSpIdentifier Identifier for the isTestSp attribute.
+     * @return TRUE if user has access to service, otherwise FALSE.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    boolean hasAccessToService(@NonNull DataAdapter adapter, @NonNull Long facilityId, @NonNull List<Member> members, @NonNull List<Long> voIds, String checkGroupMembershipAttrIdentifier, String isTestSpIdentifier)
+            throws PerunUnknownException, PerunConnectionException;
 }
