@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -450,6 +451,11 @@ public class LdapAdapterImpl implements DataAdapter {
     @Override
     public List<Member> getMembersByUser(@NonNull Long userId) throws PerunUnknownException, PerunConnectionException {
         // TODO - check MitreID code or maybe use getUserGroups()
+        String dnPrefix = this.constructUserDn(userId, baseDn);
+
+        User user = this.findPerunUserById(userId, Collections.singletonList(MEMBER_OF));
+
+
         return null;
     }
 
