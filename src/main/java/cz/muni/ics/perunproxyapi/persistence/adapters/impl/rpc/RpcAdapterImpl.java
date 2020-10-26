@@ -614,6 +614,38 @@ public class RpcAdapterImpl implements FullAdapter {
         return affiliations;
     }
 
+    @Override
+    public boolean checkGroupMembership(@NonNull Long facilityId, String checkGroupMembershipAttrIdentifier)
+            throws PerunUnknownException, PerunConnectionException {
+        return AdapterUtils.checkGroupMembership(this, facilityId, checkGroupMembershipAttrIdentifier);
+    }
+
+    @Override
+    public boolean isTestSp(@NonNull Long facilityId, String isTestSpIdentifier) throws PerunUnknownException, PerunConnectionException {
+        return AdapterUtils.isTestSp(this, facilityId, isTestSpIdentifier);
+    }
+
+    @Override
+    public List<Group> getFacilityGroupsWhereUserIsValidMember(Long userId, Long facilityId) throws PerunUnknownException, PerunConnectionException {
+        List<Group> facilityGroups = this.getAllowedGroups(facilityId);
+        List<Group> userGroups = this.getUserGroups(userId);
+
+        return facilityGroups.stream()
+                .distinct()
+                .filter(userGroups::contains)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean isValidMemberOfAnyVo(Long userId, List<Long> voIds) throws PerunUnknownException, PerunConnectionException {
+        List<Member> members = this.getMembersByUser(userId);
+        boolean isValidMemberOfVo = members.stream()
+                .filter(member -> member.getStatus().equals(MemberStatus.VALID))
+                .anyMatch(member -> voIds.contains(member.getVoId()));
+
+        return isValidMemberOfVo;
+    }
+
     // private methods
 
     private Set<String> getFacilityCapabilities(Long facilityId, @NonNull String capabilitiesAttrName)
@@ -762,16 +794,7 @@ public class RpcAdapterImpl implements FullAdapter {
         return user;
     }
 
-    public List<Member> getMembersByUser(@NonNull Long userId) throws PerunUnknownException, PerunConnectionException {
-        Map<String, Object> params = new LinkedHashMap<>();
-        params.put(PARAM_USER, userId);
-
-        JsonNode perunResponse = connectorRpc.post(MEMBERS_MANAGER, "getMembersByUser", params);
-        return RpcMapper.mapMembers(perunResponse);
-    }
-
-    @Override
-    public List<Group> getAllowedGroups(@NonNull Long facilityId) throws PerunUnknownException, PerunConnectionException {
+    private List<Group> getAllowedGroups(@NonNull Long facilityId) throws PerunUnknownException, PerunConnectionException {
         Map<String, Object> params = new LinkedHashMap<>();
         params.put(PARAM_FACILITY, facilityId);
 
@@ -779,8 +802,7 @@ public class RpcAdapterImpl implements FullAdapter {
         return RpcMapper.mapGroups(perunResponse);
     }
 
-    @Override
-    public List<Group> getGroupsWhereMemberIsActive(@NonNull Long memberId)
+    private List<Group> getGroupsWhereMemberIsActive(@NonNull Long memberId)
             throws PerunUnknownException, PerunConnectionException {
         Map<String, Object> params = new LinkedHashMap<>();
         params.put(PARAM_MEMBER, memberId);
@@ -789,15 +811,12 @@ public class RpcAdapterImpl implements FullAdapter {
         return RpcMapper.mapGroups(perunResponse);
     }
 
-    @Override
-    public boolean checkGroupMembership(@NonNull Long facilityId, String checkGroupMembershipAttrIdentifier)
-            throws PerunUnknownException, PerunConnectionException {
-        return AdapterUtils.checkGroupMembership(this, facilityId, checkGroupMembershipAttrIdentifier);
-    }
+    private List<Member> getMembersByUser(@NonNull Long userId) throws PerunUnknownException, PerunConnectionException {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put(PARAM_USER, userId);
 
-    @Override
-    public boolean isTestSp(@NonNull Long facilityId, String isTestSpIdentifier) throws PerunUnknownException, PerunConnectionException {
-        return AdapterUtils.isTestSp(this, facilityId, isTestSpIdentifier);
+        JsonNode perunResponse = connectorRpc.post(MEMBERS_MANAGER, "getMembersByUser", params);
+        return RpcMapper.mapMembers(perunResponse);
     }
 
     private Facility returnFacility(Facility facility, String rpIdentifier) {

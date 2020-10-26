@@ -113,6 +113,7 @@ public class FacadeUtils {
      * @throws IOException Invalid I/O value occurred during conversion from JSON to list of long values.
      */
     public static List<Long> getRequiredLongListOption(String key, JsonNode options) throws IOException {
+        // TODO test mapping from JsonNode to List<Long>
         ObjectMapper mapper = new ObjectMapper();
         ObjectReader reader = mapper.readerFor(new TypeReference<List<Long>>() {
         });

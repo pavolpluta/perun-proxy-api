@@ -176,13 +176,6 @@ public class ProxyUserServiceImpl implements ProxyUserService {
         return attributesUpdated && lastAccessUpdated;
     }
 
-    @Override
-    public List<Member> getMembersByUser(@NonNull DataAdapter adapter, @NonNull Long userId)
-            throws PerunUnknownException, PerunConnectionException
-    {
-        return adapter.getMembersByUser(userId);
-    }
-
     private UserExtSource getUserExtSourceUsingIdentityId(@NonNull FullAdapter adapter, @NonNull List<String> uesAttrs,
                                                           @NonNull Map<String, JsonNode> internalIdentifiersToNewValues,
                                                           @NonNull String login, @NonNull String identityId)

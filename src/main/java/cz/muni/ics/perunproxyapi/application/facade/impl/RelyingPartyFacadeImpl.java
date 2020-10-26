@@ -8,12 +8,10 @@ import cz.muni.ics.perunproxyapi.application.service.ProxyUserService;
 import cz.muni.ics.perunproxyapi.application.service.RelyingPartyService;
 import cz.muni.ics.perunproxyapi.persistence.adapters.DataAdapter;
 import cz.muni.ics.perunproxyapi.persistence.adapters.impl.AdaptersContainer;
-import cz.muni.ics.perunproxyapi.persistence.enums.MemberStatus;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.EntityNotFoundException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.Facility;
-import cz.muni.ics.perunproxyapi.persistence.models.Member;
 import cz.muni.ics.perunproxyapi.persistence.models.User;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -118,9 +116,8 @@ public class RelyingPartyFacadeImpl implements RelyingPartyFacade {
         if (user == null) {
             throw new EntityNotFoundException("No user has been found for given login");
         }
-        List<Member> members = proxyUserService.getMembersByUser(adapter, user.getPerunId());
 
-        return relyingPartyService.hasAccessToService(adapter, facility.getId(), members, voIds,
+        return relyingPartyService.hasAccessToService(adapter, facility.getId(), user.getPerunId(), voIds,
                 checkGroupMembershipAttrIdentifier, isTestSpIdentifier);
     }
 

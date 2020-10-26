@@ -1,6 +1,6 @@
 package cz.muni.ics.perunproxyapi.persistence.adapters;
 
-import cz.muni.ics.perunproxyapi.persistence.adapters.impl.rpc.RpcAdapterImpl;
+import cz.muni.ics.perunproxyapi.persistence.adapters.impl.ldap.LdapAdapterImpl;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.AttributeObjectMapping;
@@ -10,8 +10,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import static cz.muni.ics.perunproxyapi.persistence.adapters.impl.ldap.LdapAdapterImpl.PERUN_GROUP_ID;
+import static cz.muni.ics.perunproxyapi.persistence.adapters.impl.ldap.LdapAdapterImpl.PERUN_VO_ID;
 import static cz.muni.ics.perunproxyapi.persistence.enums.Entity.FACILITY;
 import static cz.muni.ics.perunproxyapi.persistence.enums.Entity.USER;
 
@@ -124,5 +128,59 @@ public class AdapterUtils {
         }
 
         return false;
+    }
+
+    /**
+     * Extract perunGroupIds which given user is member of.
+     * @param ldapAdapter LDAP adapter.
+     * @param userId Id of the user.
+     * @param memberOfIdentifier LDAP identifier of memberOf attribute.
+     * @return Set of group ids (filled or empty).
+     */
+    public static Set<Long> getLdapGroupIdsWhereUserIsMember(LdapAdapterImpl ldapAdapter, Long userId, String memberOfIdentifier)
+    {
+        if (!StringUtils.hasText(memberOfIdentifier)){
+            return new HashSet<>();
+        }
+
+        PerunAttributeValue attributeValue = ldapAdapter.getAttributeValue(USER, userId, memberOfIdentifier);
+        if (attributeValue != null && attributeValue.valueAsList() != null) {
+            Set<Long> groupIds = new HashSet<>();
+            for (String memberOfValue: attributeValue.valueAsList()) {
+                String groupId = memberOfValue.split(",",2)[0];
+                groupId = groupId.replace(PERUN_GROUP_ID + '=',"");
+                groupIds.add(Long.parseLong(groupId));
+            }
+            return groupIds;
+        }
+
+        return new HashSet<>();
+    }
+
+    /**
+     * Extract perunVoIds which given user is member of.
+     * @param ldapAdapter LDAP adapter.
+     * @param userId Id of the user.
+     * @param memberOfIdentifier LDAP identifier of memberOf attribute.
+     * @return Set of VO ids (filled or empty).
+     */
+    public static Set<Long> getLdapVoIdsWhereUserIsMember(LdapAdapterImpl ldapAdapter, Long userId, String memberOfIdentifier) {
+        if (!StringUtils.hasText(memberOfIdentifier)){
+            return new HashSet<>();
+        }
+
+        PerunAttributeValue attributeValue = ldapAdapter.getAttributeValue(USER, userId, memberOfIdentifier);
+        if (attributeValue != null && attributeValue.valueAsList() != null) {
+            Set<Long> voIds = new HashSet<>();
+            for (String memberOfValue: attributeValue.valueAsList()) {
+                String[] parts = memberOfValue.split(",",3);
+                String voId = parts[1];
+                voId = voId.replace(PERUN_VO_ID + '=',"");
+                voIds.add(Long.parseLong(voId));
+            }
+            return voIds;
+        }
+
+        return new HashSet<>();
     }
 }

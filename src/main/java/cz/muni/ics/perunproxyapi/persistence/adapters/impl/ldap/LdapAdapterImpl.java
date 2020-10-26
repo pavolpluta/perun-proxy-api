@@ -19,7 +19,6 @@ import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.AttributeObjectMapping;
 import cz.muni.ics.perunproxyapi.persistence.models.Facility;
 import cz.muni.ics.perunproxyapi.persistence.models.Group;
-import cz.muni.ics.perunproxyapi.persistence.models.Member;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue;
 import cz.muni.ics.perunproxyapi.persistence.models.User;
 import cz.muni.ics.perunproxyapi.persistence.models.Vo;
@@ -41,7 +40,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -449,31 +447,6 @@ public class LdapAdapterImpl implements DataAdapter {
     }
 
     @Override
-    public List<Member> getMembersByUser(@NonNull Long userId) throws PerunUnknownException, PerunConnectionException {
-        // TODO - check MitreID code or maybe use getUserGroups()
-        String dnPrefix = this.constructUserDn(userId, baseDn);
-
-        User user = this.findPerunUserById(userId, Collections.singletonList(MEMBER_OF));
-
-
-        return null;
-    }
-
-    @Override
-    public List<Group> getAllowedGroups(@NonNull Long facilityId) throws PerunUnknownException, PerunConnectionException {
-        //TODO
-        Set<Long> allowedGroupsIds = this.getGroupIdsAssignedToFacility(facilityId);
-
-        return null;
-    }
-
-    @Override
-    public List<Group> getGroupsWhereMemberIsActive(@NonNull Long memberId) throws PerunUnknownException, PerunConnectionException {
-        // TODO
-        return null;
-    }
-
-    @Override
     public boolean checkGroupMembership(Long facilityId, String checkGroupMembershipAttrIdentifier) throws PerunUnknownException, PerunConnectionException {
         return AdapterUtils.checkGroupMembership(this, facilityId, checkGroupMembershipAttrIdentifier);
     }
@@ -481,6 +454,21 @@ public class LdapAdapterImpl implements DataAdapter {
     @Override
     public boolean isTestSp(@NonNull Long facilityId, String isTestSpIdentifier) throws PerunUnknownException, PerunConnectionException {
         return AdapterUtils.isTestSp(this, facilityId, isTestSpIdentifier);
+    }
+
+    @Override
+    public List<Group> getFacilityGroupsWhereUserIsValidMember(Long userId, Long facilityId) {
+        Set<Long> allowedGroupsIds = this.getGroupIdsAssignedToFacility(facilityId);
+        Set<Long> memberGroupIds = AdapterUtils.getLdapGroupIdsWhereUserIsMember(this, userId, MEMBER_OF);
+        allowedGroupsIds.retainAll(memberGroupIds);
+        return this.getGroupsByIds(allowedGroupsIds);
+    }
+
+    @Override
+    public boolean isValidMemberOfAnyVo(Long userId, List<Long> voIds) {
+        Set<Long> memberVoIds = AdapterUtils.getLdapVoIdsWhereUserIsMember(this, userId, MEMBER_OF);
+
+        return memberVoIds.stream().anyMatch(voIds::contains);
     }
 
     // private methods

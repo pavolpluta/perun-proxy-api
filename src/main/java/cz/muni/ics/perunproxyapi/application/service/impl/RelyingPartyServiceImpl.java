@@ -3,18 +3,15 @@ package cz.muni.ics.perunproxyapi.application.service.impl;
 import cz.muni.ics.perunproxyapi.application.service.RelyingPartyService;
 import cz.muni.ics.perunproxyapi.application.service.ServiceUtils;
 import cz.muni.ics.perunproxyapi.persistence.adapters.DataAdapter;
-import cz.muni.ics.perunproxyapi.persistence.enums.MemberStatus;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.Facility;
 import cz.muni.ics.perunproxyapi.persistence.models.Group;
-import cz.muni.ics.perunproxyapi.persistence.models.Member;
 import lombok.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -66,15 +63,11 @@ public class RelyingPartyServiceImpl implements RelyingPartyService {
     }
 
     @Override
-    public boolean hasAccessToService(@NonNull DataAdapter adapter, @NonNull Long facilityId, @NonNull List<Member> members,
-                                      @NonNull List<Long> voIds, String checkGroupMembershipAttrIdentifier, String isTestSpIdentifier)
+    public boolean hasAccessToService(@NonNull DataAdapter adapter, @NonNull Long facilityId,
+                                      @NonNull Long userId, @NonNull List<Long> voIds, String checkGroupMembershipAttrIdentifier, String isTestSpIdentifier)
             throws PerunUnknownException, PerunConnectionException {
 
-        boolean isValidMemberOfVo = members.stream()
-                .filter(member -> member.getStatus().equals(MemberStatus.VALID))
-                .anyMatch(member -> voIds.contains(member.getVoId()));
-
-        if (!isValidMemberOfVo) {
+        if (!adapter.isValidMemberOfAnyVo(userId, voIds)) {
             return false;
         }
 
@@ -84,20 +77,8 @@ public class RelyingPartyServiceImpl implements RelyingPartyService {
             return true;
         }
 
-        List<Group> facilityGroups = adapter.getAllowedGroups(facilityId);
-
-        List<Group> activeMemberGroups = new ArrayList<>();
-        for (Member member : members) {
-            List<Group> mg = adapter.getGroupsWhereMemberIsActive(member.getId());
-            activeMemberGroups.addAll(mg);
-        }
-
-        Set<Group> intersection = facilityGroups.stream()
-                .distinct()
-                .filter(activeMemberGroups::contains)
-                .collect(Collectors.toSet());
-
-        return !intersection.isEmpty();
+        List<Group> groups = adapter.getFacilityGroupsWhereUserIsValidMember(userId, facilityId);
+        return !groups.isEmpty();
     }
 
 }

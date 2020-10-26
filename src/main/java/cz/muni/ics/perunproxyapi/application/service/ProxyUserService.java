@@ -159,12 +159,4 @@ public interface ProxyUserService {
                                          @NonNull List<String> attrsToSearchBy)
             throws PerunUnknownException, PerunConnectionException;
 
-    /**
-     * Returns members for a user.
-     * @param adapter Adapter to be used.
-     * @param userId Id of the user.
-     * @return Members for a user.
-     */
-    List<Member> getMembersByUser(@NonNull DataAdapter adapter,
-                                  @NonNull Long userId) throws PerunUnknownException, PerunConnectionException;
 }
