@@ -7,12 +7,15 @@ import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.Facility;
 import cz.muni.ics.perunproxyapi.persistence.models.Group;
+import cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue;
 import lombok.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static cz.muni.ics.perunproxyapi.persistence.enums.Entity.FACILITY;
 
 @Component
 public class RelyingPartyServiceImpl implements RelyingPartyService {
@@ -57,21 +60,38 @@ public class RelyingPartyServiceImpl implements RelyingPartyService {
     }
 
     @Override
-    public boolean isTestSp(@NonNull DataAdapter adapter, @NonNull Long facilityId, String isTestSpIdentifier)
+    public boolean isTestSp(@NonNull DataAdapter adapter, @NonNull Long facilityId, @NonNull String isTestSpIdentifier)
             throws PerunUnknownException, PerunConnectionException {
-        return adapter.isTestSp(facilityId, isTestSpIdentifier);
+        PerunAttributeValue attributeValue = adapter.getAttributeValue(FACILITY, facilityId, isTestSpIdentifier);
+        if (attributeValue != null) {
+            return attributeValue.valueAsBoolean();
+        }
+
+        return false;
     }
 
     @Override
+    public boolean checkGroupMembership(@NonNull DataAdapter adapter, @NonNull Long facilityId, @NonNull String checkGroupMembershipIdentifier)
+            throws PerunUnknownException, PerunConnectionException {
+        PerunAttributeValue attributeValue = adapter.getAttributeValue(FACILITY, facilityId, checkGroupMembershipIdentifier);
+        if (attributeValue != null) {
+            return attributeValue.valueAsBoolean();
+        }
+
+        return false;
+    }
+
+
+    @Override
     public boolean hasAccessToService(@NonNull DataAdapter adapter, @NonNull Long facilityId,
-                                      @NonNull Long userId, @NonNull List<Long> voIds, String checkGroupMembershipAttrIdentifier, String isTestSpIdentifier)
+                                      @NonNull Long userId, @NonNull List<Long> voIds, @NonNull String checkGroupMembershipAttrIdentifier)
             throws PerunUnknownException, PerunConnectionException {
 
-        if (!adapter.isValidMemberOfAnyVo(userId, voIds)) {
+        if (!adapter.isValidMemberOfAnyProvidedVo(userId, voIds)) {
             return false;
         }
 
-        boolean checkGroupMembership = adapter.checkGroupMembership(facilityId, checkGroupMembershipAttrIdentifier);
+        boolean checkGroupMembership = this.checkGroupMembership(adapter, facilityId, checkGroupMembershipAttrIdentifier);
 
         if (!checkGroupMembership) {
             return true;

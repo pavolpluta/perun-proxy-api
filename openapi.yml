@@ -532,7 +532,7 @@ paths:
         - name: rp-identifier
           in: path
           required: true
-          description: Relying party identifier
+          description: Relying party identifier in base64url safe format
           examples:
             entityId:
               $ref: '#/components/examples/rp-identifier1'

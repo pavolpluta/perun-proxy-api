@@ -50,6 +50,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static cz.muni.ics.perunproxyapi.persistence.enums.Entity.FACILITY;
+import static cz.muni.ics.perunproxyapi.persistence.enums.Entity.USER;
 import static cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue.INTEGER_TYPE;
 import static cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue.LARGE_STRING_TYPE;
 import static cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue.MAP_TYPE;
@@ -447,28 +448,51 @@ public class LdapAdapterImpl implements DataAdapter {
     }
 
     @Override
-    public boolean checkGroupMembership(Long facilityId, String checkGroupMembershipAttrIdentifier) throws PerunUnknownException, PerunConnectionException {
-        return AdapterUtils.checkGroupMembership(this, facilityId, checkGroupMembershipAttrIdentifier);
-    }
-
-    @Override
-    public boolean isTestSp(@NonNull Long facilityId, String isTestSpIdentifier) throws PerunUnknownException, PerunConnectionException {
-        return AdapterUtils.isTestSp(this, facilityId, isTestSpIdentifier);
-    }
-
-    @Override
     public List<Group> getFacilityGroupsWhereUserIsValidMember(Long userId, Long facilityId) {
         Set<Long> allowedGroupsIds = this.getGroupIdsAssignedToFacility(facilityId);
-        Set<Long> memberGroupIds = AdapterUtils.getLdapGroupIdsWhereUserIsMember(this, userId, MEMBER_OF);
-        allowedGroupsIds.retainAll(memberGroupIds);
+        Set<Long> userGroupIds = this.getGroupIdsWhereUserIsValidMember(userId);
+        allowedGroupsIds.retainAll(userGroupIds);
         return this.getGroupsByIds(allowedGroupsIds);
     }
 
     @Override
-    public boolean isValidMemberOfAnyVo(Long userId, List<Long> voIds) {
-        Set<Long> memberVoIds = AdapterUtils.getLdapVoIdsWhereUserIsMember(this, userId, MEMBER_OF);
+    public boolean isValidMemberOfAnyProvidedVo(Long userId, List<Long> voIds) {
+        Set<Long> memberVoIds = this.getVoIdsWhereUserIsValidMember(userId);
 
         return memberVoIds.stream().anyMatch(voIds::contains);
+    }
+
+    @Override
+    public Set<Long> getVoIdsWhereUserIsValidMember(Long userId) {
+        PerunAttributeValue attributeValue = this.getAttributeValue(USER, userId, MEMBER_OF);
+        if (attributeValue != null && attributeValue.valueAsList() != null) {
+            Set<Long> voIds = new HashSet<>();
+            for (String memberOfValue: attributeValue.valueAsList()) {
+                String[] parts = memberOfValue.split(",",3);
+                String voId = parts[1];
+                voId = voId.replace(PERUN_VO_ID + '=',"");
+                voIds.add(Long.parseLong(voId));
+            }
+            return voIds;
+        }
+
+        return new HashSet<>();
+    }
+
+    @Override
+    public Set<Long> getGroupIdsWhereUserIsValidMember(Long userId) {
+        PerunAttributeValue attributeValue = this.getAttributeValue(USER, userId, MEMBER_OF);
+        if (attributeValue != null && attributeValue.valueAsList() != null) {
+            Set<Long> groupIds = new HashSet<>();
+            for (String memberOfValue: attributeValue.valueAsList()) {
+                String groupId = memberOfValue.split(",",2)[0];
+                groupId = groupId.replace(PERUN_GROUP_ID + '=',"");
+                groupIds.add(Long.parseLong(groupId));
+            }
+            return groupIds;
+        }
+
+        return new HashSet<>();
     }
 
     // private methods

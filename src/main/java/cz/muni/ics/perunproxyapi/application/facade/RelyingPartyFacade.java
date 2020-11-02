@@ -43,4 +43,5 @@ public interface RelyingPartyFacade {
      */
     boolean hasAccessToService(@NonNull String rpIdentifier,@NonNull String login)
             throws PerunUnknownException, PerunConnectionException, EntityNotFoundException, IOException;
+
 }

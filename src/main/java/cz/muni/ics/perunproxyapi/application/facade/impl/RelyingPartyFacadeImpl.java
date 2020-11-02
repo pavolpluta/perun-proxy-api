@@ -99,8 +99,8 @@ public class RelyingPartyFacadeImpl implements RelyingPartyFacade {
         JsonNode options = FacadeUtils.getOptions(HAS_ACCESS_TO_SERVICE, methodConfigurations);
         DataAdapter adapter = FacadeUtils.getAdapter(adaptersContainer, options);
 
-        String checkGroupMembershipAttrIdentifier = FacadeUtils.getStringOption(CHECK_GROUP_MEMBERSHIP, options);
-        String isTestSpIdentifier = FacadeUtils.getStringOption(IS_TEST_SP, options);
+        String checkGroupMembershipAttrIdentifier = FacadeUtils.getRequiredStringOption(CHECK_GROUP_MEMBERSHIP, HAS_ACCESS_TO_SERVICE, options);
+        String isTestSpIdentifier = FacadeUtils.getRequiredStringOption(IS_TEST_SP, HAS_ACCESS_TO_SERVICE, options);
 
         Facility facility = relyingPartyService.getFacilityByIdentifier(adapter, rpIdentifier);
         if (facility == null || facility.getId() == null) {
@@ -109,8 +109,8 @@ public class RelyingPartyFacadeImpl implements RelyingPartyFacade {
 
         boolean isTestSp = relyingPartyService.isTestSp(adapter, facility.getId(), isTestSpIdentifier);
 
-        List<Long> voIds = isTestSp ? FacadeUtils.getRequiredLongListOption(TEST_VO_IDS, options) :
-                FacadeUtils.getRequiredLongListOption(PROD_VO_IDS, options);
+        List<Long> voIds = isTestSp ? FacadeUtils.getRequiredLongListOption(TEST_VO_IDS, HAS_ACCESS_TO_SERVICE, options) :
+                FacadeUtils.getRequiredLongListOption(PROD_VO_IDS, HAS_ACCESS_TO_SERVICE, options);
 
         User user = proxyUserService.getUserByLogin(adapter, login);
         if (user == null) {
@@ -118,7 +118,7 @@ public class RelyingPartyFacadeImpl implements RelyingPartyFacade {
         }
 
         return relyingPartyService.hasAccessToService(adapter, facility.getId(), user.getPerunId(), voIds,
-                checkGroupMembershipAttrIdentifier, isTestSpIdentifier);
+                checkGroupMembershipAttrIdentifier);
     }
 
 }

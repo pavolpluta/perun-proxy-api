@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import cz.muni.ics.perunproxyapi.persistence.adapters.DataAdapter;
 import cz.muni.ics.perunproxyapi.persistence.adapters.FullAdapter;
 import cz.muni.ics.perunproxyapi.persistence.adapters.impl.AdaptersContainer;
@@ -108,20 +107,21 @@ public class FacadeUtils {
      * Get list of long values from method options. If option is not configured, NULL is returned.
      *
      * @param key Key identifying the option.
+     * @param method Which method demands for the option.
      * @param options JSON containing the method options.
      * @return Extracted option as list of long values.
      * @throws IOException Invalid I/O value occurred during conversion from JSON to list of long values.
      */
-    public static List<Long> getRequiredLongListOption(String key, JsonNode options) throws IOException {
-        // TODO test mapping from JsonNode to List<Long>
+    public static List<Long> getRequiredLongListOption(@NonNull String key,@NonNull String method,
+                                                       @NonNull JsonNode options) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         ObjectReader reader = mapper.readerFor(new TypeReference<List<Long>>() {
         });
 
         List<Long> values = options.hasNonNull(key) ? reader.readValue(options.get(key)) : null;
         if (values == null) {
-            log.error("Required option {} has not been found. " +
-                    "Check your configuration.", key);
+            log.error("Required option {} has not been found by method {}. " +
+                    "Check your configuration.", key, method);
             throw new IllegalArgumentException("Required option has not been found.");
         }
 

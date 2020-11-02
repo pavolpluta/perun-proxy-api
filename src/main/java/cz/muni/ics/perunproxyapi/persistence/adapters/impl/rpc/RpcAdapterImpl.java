@@ -615,35 +615,42 @@ public class RpcAdapterImpl implements FullAdapter {
     }
 
     @Override
-    public boolean checkGroupMembership(@NonNull Long facilityId, String checkGroupMembershipAttrIdentifier)
-            throws PerunUnknownException, PerunConnectionException {
-        return AdapterUtils.checkGroupMembership(this, facilityId, checkGroupMembershipAttrIdentifier);
-    }
-
-    @Override
-    public boolean isTestSp(@NonNull Long facilityId, String isTestSpIdentifier) throws PerunUnknownException, PerunConnectionException {
-        return AdapterUtils.isTestSp(this, facilityId, isTestSpIdentifier);
-    }
-
-    @Override
     public List<Group> getFacilityGroupsWhereUserIsValidMember(Long userId, Long facilityId) throws PerunUnknownException, PerunConnectionException {
-        List<Group> facilityGroups = this.getAllowedGroups(facilityId);
-        List<Group> userGroups = this.getUserGroups(userId);
+        List<Group> allowedGroups = this.getAllowedGroups(facilityId);
+        Set<Long> userGroupIds = this.getGroupIdsWhereUserIsValidMember(userId);
 
-        return facilityGroups.stream()
-                .distinct()
-                .filter(userGroups::contains)
+        return allowedGroups.stream()
+                .filter(group -> userGroupIds.contains(group.getId()))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public boolean isValidMemberOfAnyVo(Long userId, List<Long> voIds) throws PerunUnknownException, PerunConnectionException {
-        List<Member> members = this.getMembersByUser(userId);
-        boolean isValidMemberOfVo = members.stream()
-                .filter(member -> member.getStatus().equals(MemberStatus.VALID))
-                .anyMatch(member -> voIds.contains(member.getVoId()));
+    public boolean isValidMemberOfAnyProvidedVo(Long userId, List<Long> voIds) throws PerunUnknownException, PerunConnectionException {
+        Set<Long> memberVoIds = this.getVoIdsWhereUserIsValidMember(userId);
+        boolean isValidMemberOfVo = memberVoIds.stream()
+                .anyMatch(memberVoIds::contains);
 
         return isValidMemberOfVo;
+    }
+
+    @Override
+    public Set<Long> getVoIdsWhereUserIsValidMember(Long userId) throws PerunUnknownException, PerunConnectionException {
+        List<Member> members = this.getMembersByUser(userId);
+        Set<Long> voIds = members.stream()
+                .filter(member -> member.getStatus().equals(VALID))
+                .map(Member::getVoId)
+                .collect(Collectors.toSet());
+
+        return voIds;
+    }
+
+    @Override
+    public Set<Long> getGroupIdsWhereUserIsValidMember(Long userId) throws PerunUnknownException, PerunConnectionException {
+        Set<Long> groupIds = this.getUserGroups(userId).stream()
+                .map(Group::getId)
+                .collect(Collectors.toSet());
+
+        return groupIds;
     }
 
     // private methods
