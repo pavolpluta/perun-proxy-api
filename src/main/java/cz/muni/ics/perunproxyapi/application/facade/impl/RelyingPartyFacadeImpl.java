@@ -101,24 +101,21 @@ public class RelyingPartyFacadeImpl implements RelyingPartyFacade {
 
         String checkGroupMembershipAttrIdentifier = FacadeUtils.getRequiredStringOption(CHECK_GROUP_MEMBERSHIP, HAS_ACCESS_TO_SERVICE, options);
         String isTestSpIdentifier = FacadeUtils.getRequiredStringOption(IS_TEST_SP, HAS_ACCESS_TO_SERVICE, options);
+        List<Long> testVoIds = FacadeUtils.getRequiredLongListOption(TEST_VO_IDS, HAS_ACCESS_TO_SERVICE, options);
+        List<Long> prodVoIds = FacadeUtils.getRequiredLongListOption(PROD_VO_IDS, HAS_ACCESS_TO_SERVICE, options);
 
         Facility facility = relyingPartyService.getFacilityByIdentifier(adapter, rpIdentifier);
         if (facility == null || facility.getId() == null) {
             throw new EntityNotFoundException("No facility has been found for given identifier");
         }
 
-        boolean isTestSp = relyingPartyService.isTestSp(adapter, facility.getId(), isTestSpIdentifier);
-
-        List<Long> voIds = isTestSp ? FacadeUtils.getRequiredLongListOption(TEST_VO_IDS, HAS_ACCESS_TO_SERVICE, options) :
-                FacadeUtils.getRequiredLongListOption(PROD_VO_IDS, HAS_ACCESS_TO_SERVICE, options);
-
         User user = proxyUserService.getUserByLogin(adapter, login);
         if (user == null) {
             throw new EntityNotFoundException("No user has been found for given login");
         }
 
-        return relyingPartyService.hasAccessToService(adapter, facility.getId(), user.getPerunId(), voIds,
-                checkGroupMembershipAttrIdentifier);
+        return relyingPartyService.hasAccessToService(adapter, facility.getId(), user.getPerunId(), testVoIds, prodVoIds,
+                checkGroupMembershipAttrIdentifier, isTestSpIdentifier);
     }
 
 }

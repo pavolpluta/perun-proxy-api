@@ -84,8 +84,13 @@ public class RelyingPartyServiceImpl implements RelyingPartyService {
 
     @Override
     public boolean hasAccessToService(@NonNull DataAdapter adapter, @NonNull Long facilityId,
-                                      @NonNull Long userId, @NonNull List<Long> voIds, @NonNull String checkGroupMembershipAttrIdentifier)
+                                      @NonNull Long userId, @NonNull List<Long> testVoIds, @NonNull List<Long> prodVoIds, @NonNull String checkGroupMembershipAttrIdentifier,
+                                      @NonNull String isTestSpIdentifier)
             throws PerunUnknownException, PerunConnectionException {
+
+        boolean isTestSp = this.isTestSp(adapter, facilityId, isTestSpIdentifier);
+
+        List<Long> voIds = isTestSp ? testVoIds : prodVoIds;
 
         if (!adapter.isValidMemberOfAnyProvidedVo(userId, voIds)) {
             return false;

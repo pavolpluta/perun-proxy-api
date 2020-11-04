@@ -82,14 +82,16 @@ public interface RelyingPartyService {
      * @param adapter Adapter to be used
      * @param facilityId Facility id.
      * @param userId User id.
-     * @param voIds Ids of VOs.
-     * @param checkGroupMembershipAttrIdentifier Identifier for the checkGroupMembershipAttribute attribute.
+     * @param testVoIds Ids of test VOs.
+     * @param prodVoIds Ids of production VOs.
+     * @param checkGroupMembershipAttrIdentifier Identifier for the checkGroupMembership attribute.
+     * @param isTestSpIdentifier Identifier for the isTestSp attribute.
      * @return TRUE if user has access to service, otherwise FALSE.
      * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
      * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
      */
     boolean hasAccessToService(@NonNull DataAdapter adapter, @NonNull Long facilityId, @NonNull Long userId,
-                               @NonNull List<Long> voIds, @NonNull String checkGroupMembershipAttrIdentifier)
+                               @NonNull List<Long> testVoIds, @NonNull List<Long> prodVoIds, @NonNull String checkGroupMembershipAttrIdentifier, @NonNull String isTestSpIdentifier)
             throws PerunUnknownException, PerunConnectionException;
 
 }
