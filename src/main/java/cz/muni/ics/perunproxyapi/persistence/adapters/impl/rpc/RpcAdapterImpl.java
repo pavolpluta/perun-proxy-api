@@ -615,7 +615,7 @@ public class RpcAdapterImpl implements FullAdapter {
     }
 
     @Override
-    public List<Group> getFacilityGroupsWhereUserIsValidMember(Long userId, Long facilityId) throws PerunUnknownException, PerunConnectionException {
+    public List<Group> getFacilityGroupsWhereUserIsValidMember(@NonNull Long userId, @NonNull Long facilityId) throws PerunUnknownException, PerunConnectionException {
         List<Group> allowedGroups = this.getAllowedGroups(facilityId);
         Set<Long> userGroupIds = this.getGroupIdsWhereUserIsValidMember(userId);
 
@@ -625,32 +625,27 @@ public class RpcAdapterImpl implements FullAdapter {
     }
 
     @Override
-    public boolean isValidMemberOfAnyProvidedVo(Long userId, List<Long> voIds) throws PerunUnknownException, PerunConnectionException {
+    public boolean isValidMemberOfAnyProvidedVo(@NonNull Long userId, @NonNull List<Long> voIds) throws PerunUnknownException, PerunConnectionException {
         Set<Long> memberVoIds = this.getVoIdsWhereUserIsValidMember(userId);
-        boolean isValidMemberOfVo = memberVoIds.stream()
-                .anyMatch(memberVoIds::contains);
-
-        return isValidMemberOfVo;
+        return !Collections.disjoint(voIds, memberVoIds);
     }
 
     @Override
-    public Set<Long> getVoIdsWhereUserIsValidMember(Long userId) throws PerunUnknownException, PerunConnectionException {
+    public Set<Long> getVoIdsWhereUserIsValidMember(@NonNull Long userId) throws PerunUnknownException, PerunConnectionException {
         List<Member> members = this.getMembersByUser(userId);
-        Set<Long> voIds = members.stream()
+
+        return members.stream()
                 .filter(member -> member.getStatus().equals(VALID))
                 .map(Member::getVoId)
                 .collect(Collectors.toSet());
-
-        return voIds;
     }
 
     @Override
-    public Set<Long> getGroupIdsWhereUserIsValidMember(Long userId) throws PerunUnknownException, PerunConnectionException {
-        Set<Long> groupIds = this.getUserGroups(userId).stream()
+    public Set<Long> getGroupIdsWhereUserIsValidMember(@NonNull Long userId) throws PerunUnknownException, PerunConnectionException {
+
+        return this.getUserGroups(userId).stream()
                 .map(Group::getId)
                 .collect(Collectors.toSet());
-
-        return groupIds;
     }
 
     // private methods

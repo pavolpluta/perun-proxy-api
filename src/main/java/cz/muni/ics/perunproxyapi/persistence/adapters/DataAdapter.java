@@ -209,7 +209,7 @@ public interface DataAdapter {
      * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
      * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
      */
-    List<Group> getFacilityGroupsWhereUserIsValidMember(Long userId, Long facilityId)
+    List<Group> getFacilityGroupsWhereUserIsValidMember(@NonNull Long userId, @NonNull Long facilityId)
             throws PerunUnknownException, PerunConnectionException;
 
     /**
@@ -221,7 +221,7 @@ public interface DataAdapter {
      * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
      * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
      */
-    boolean isValidMemberOfAnyProvidedVo(Long userId, List<Long> voIds) throws PerunUnknownException, PerunConnectionException;
+    boolean isValidMemberOfAnyProvidedVo(@NonNull Long userId, @NonNull List<Long> voIds) throws PerunUnknownException, PerunConnectionException;
 
     /**
      * Get voIds where user is valid member.
@@ -231,7 +231,7 @@ public interface DataAdapter {
      * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
      * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
      */
-    Set<Long> getVoIdsWhereUserIsValidMember(Long userId) throws PerunUnknownException, PerunConnectionException;
+    Set<Long> getVoIdsWhereUserIsValidMember(@NonNull Long userId) throws PerunUnknownException, PerunConnectionException;
 
     /**
      * Get groupIds where user is valid member.
@@ -241,6 +241,6 @@ public interface DataAdapter {
      * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
      * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
      */
-    Set<Long> getGroupIdsWhereUserIsValidMember(Long userId) throws PerunUnknownException, PerunConnectionException;
+    Set<Long> getGroupIdsWhereUserIsValidMember(@NonNull Long userId) throws PerunUnknownException, PerunConnectionException;
 
 }

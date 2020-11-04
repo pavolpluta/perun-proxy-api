@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -448,7 +449,7 @@ public class LdapAdapterImpl implements DataAdapter {
     }
 
     @Override
-    public List<Group> getFacilityGroupsWhereUserIsValidMember(Long userId, Long facilityId) {
+    public List<Group> getFacilityGroupsWhereUserIsValidMember(@NonNull Long userId, @NonNull Long facilityId) {
         Set<Long> allowedGroupsIds = this.getGroupIdsAssignedToFacility(facilityId);
         Set<Long> userGroupIds = this.getGroupIdsWhereUserIsValidMember(userId);
         allowedGroupsIds.retainAll(userGroupIds);
@@ -456,21 +457,21 @@ public class LdapAdapterImpl implements DataAdapter {
     }
 
     @Override
-    public boolean isValidMemberOfAnyProvidedVo(Long userId, List<Long> voIds) {
+    public boolean isValidMemberOfAnyProvidedVo(@NonNull Long userId, @NonNull List<Long> voIds) {
         Set<Long> memberVoIds = this.getVoIdsWhereUserIsValidMember(userId);
 
-        return memberVoIds.stream().anyMatch(voIds::contains);
+        return !Collections.disjoint(voIds, memberVoIds);
     }
 
     @Override
-    public Set<Long> getVoIdsWhereUserIsValidMember(Long userId) {
+    public Set<Long> getVoIdsWhereUserIsValidMember(@NonNull Long userId) {
         PerunAttributeValue attributeValue = this.getAttributeValue(USER, userId, MEMBER_OF);
         if (attributeValue != null && attributeValue.valueAsList() != null) {
             Set<Long> voIds = new HashSet<>();
             for (String memberOfValue: attributeValue.valueAsList()) {
-                String[] parts = memberOfValue.split(",",3);
+                String[] parts = memberOfValue.split(",", 3);
                 String voId = parts[1];
-                voId = voId.replace(PERUN_VO_ID + '=',"");
+                voId = voId.replace(PERUN_VO_ID + '=', "");
                 voIds.add(Long.parseLong(voId));
             }
             return voIds;
@@ -480,13 +481,13 @@ public class LdapAdapterImpl implements DataAdapter {
     }
 
     @Override
-    public Set<Long> getGroupIdsWhereUserIsValidMember(Long userId) {
+    public Set<Long> getGroupIdsWhereUserIsValidMember(@NonNull Long userId) {
         PerunAttributeValue attributeValue = this.getAttributeValue(USER, userId, MEMBER_OF);
         if (attributeValue != null && attributeValue.valueAsList() != null) {
             Set<Long> groupIds = new HashSet<>();
             for (String memberOfValue: attributeValue.valueAsList()) {
-                String groupId = memberOfValue.split(",",2)[0];
-                groupId = groupId.replace(PERUN_GROUP_ID + '=',"");
+                String groupId = memberOfValue.split(",", 2)[0];
+                groupId = groupId.replace(PERUN_GROUP_ID + '=', "");
                 groupIds.add(Long.parseLong(groupId));
             }
             return groupIds;
