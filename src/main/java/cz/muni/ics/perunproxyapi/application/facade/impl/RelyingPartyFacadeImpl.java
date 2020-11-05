@@ -99,7 +99,8 @@ public class RelyingPartyFacadeImpl implements RelyingPartyFacade {
         JsonNode options = FacadeUtils.getOptions(HAS_ACCESS_TO_SERVICE, methodConfigurations);
         DataAdapter adapter = FacadeUtils.getAdapter(adaptersContainer, options);
 
-        String checkGroupMembershipAttrIdentifier = FacadeUtils.getRequiredStringOption(CHECK_GROUP_MEMBERSHIP, HAS_ACCESS_TO_SERVICE, options);
+        String checkGroupMembershipAttrIdentifier = FacadeUtils.getRequiredStringOption(CHECK_GROUP_MEMBERSHIP,
+                HAS_ACCESS_TO_SERVICE, options);
         String isTestSpIdentifier = FacadeUtils.getRequiredStringOption(IS_TEST_SP, HAS_ACCESS_TO_SERVICE, options);
         List<Long> testVoIds = FacadeUtils.getRequiredLongListOption(TEST_VO_IDS, HAS_ACCESS_TO_SERVICE, options);
         List<Long> prodVoIds = FacadeUtils.getRequiredLongListOption(PROD_VO_IDS, HAS_ACCESS_TO_SERVICE, options);
@@ -110,12 +111,12 @@ public class RelyingPartyFacadeImpl implements RelyingPartyFacade {
         }
 
         User user = proxyUserService.getUserByLogin(adapter, login);
-        if (user == null) {
+        if (user == null || user.getPerunId() == null) {
             throw new EntityNotFoundException("No user has been found for given login");
         }
 
-        return relyingPartyService.hasAccessToService(adapter, facility.getId(), user.getPerunId(), testVoIds, prodVoIds,
-                checkGroupMembershipAttrIdentifier, isTestSpIdentifier);
+        return relyingPartyService.hasAccessToService(adapter, facility.getId(), user.getPerunId(),
+                testVoIds, prodVoIds, checkGroupMembershipAttrIdentifier, isTestSpIdentifier);
     }
 
 }
