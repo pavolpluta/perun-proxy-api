@@ -7,6 +7,6 @@
 #     adapter: "RPC" (either RPC or LDAP)
 #     optionX: 123
 #############################################################
-- methodName: "find_by_identifiers"
+- methodName: "get_entitlements"
   configuration:
     adapter: "RPC"

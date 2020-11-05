@@ -1,5 +1,6 @@
 package cz.muni.ics.perunproxyapi.persistence.adapters;
 
+import cz.muni.ics.perunproxyapi.persistence.adapters.impl.ldap.LdapAdapterImpl;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.AttributeObjectMapping;
@@ -9,8 +10,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import static cz.muni.ics.perunproxyapi.persistence.adapters.impl.ldap.LdapAdapterImpl.PERUN_GROUP_ID;
+import static cz.muni.ics.perunproxyapi.persistence.adapters.impl.ldap.LdapAdapterImpl.PERUN_VO_ID;
+import static cz.muni.ics.perunproxyapi.persistence.enums.Entity.FACILITY;
 import static cz.muni.ics.perunproxyapi.persistence.enums.Entity.USER;
 
 /**

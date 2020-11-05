@@ -13,6 +13,13 @@
   rpcName: "urn:perun:user:attribute-def:def:additional-identifiers-example"
   ldapName: "additional_identifiers"
   attrType: ARRAY
+- identifier: "urn:perun:facility:attribute-def:def:checkGroupMembership"
+  rpcName: "urn:perun:facility:attribute-def:def:checkGroupMembership"
+  ldapName: "checkGroupMembership"
+  attrType: BOOLEAN
+- identifier: "urn:perun:facility:attribute-def:def:isTestSp"
+  rpcName: "urn:perun:facility:attribute-def:def:isTestSp"
+  ldapName: "isTestSp"
 
 # USER
 - identifier: "user:Attr1"

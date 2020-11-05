@@ -7,12 +7,15 @@ import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.Facility;
 import cz.muni.ics.perunproxyapi.persistence.models.Group;
+import cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue;
 import lombok.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static cz.muni.ics.perunproxyapi.persistence.enums.Entity.FACILITY;
 
 @Component
 public class RelyingPartyServiceImpl implements RelyingPartyService {
@@ -51,9 +54,37 @@ public class RelyingPartyServiceImpl implements RelyingPartyService {
 
     @Override
     public Facility getFacilityByIdentifier(@NonNull DataAdapter adapter, @NonNull String rpIdentifier)
+            throws PerunUnknownException, PerunConnectionException {
+        return adapter.getFacilityByRpIdentifier(rpIdentifier);
+    }
+
+    @Override
+    public boolean hasAccessToService(@NonNull DataAdapter adapter,
+                                      @NonNull Long facilityId,
+                                      @NonNull Long userId,
+                                      @NonNull List<Long> testVoIds,
+                                      @NonNull List<Long> prodVoIds,
+                                      @NonNull String checkGroupMembershipAttrIdentifier,
+                                      @NonNull String isTestSpIdentifier)
             throws PerunUnknownException, PerunConnectionException
     {
-        return adapter.getFacilityByRpIdentifier(rpIdentifier);
+
+        PerunAttributeValue isTestSpAttrValue = adapter.getAttributeValue(FACILITY, facilityId, isTestSpIdentifier);
+        boolean isTestSp = isTestSpAttrValue != null && isTestSpAttrValue.valueAsBoolean();
+        List<Long> voIds = isTestSp ? testVoIds : prodVoIds;
+        if (!adapter.isValidMemberOfAnyProvidedVo(userId, voIds)) {
+            return false;
+        }
+
+        PerunAttributeValue attributeValue = adapter.getAttributeValue(FACILITY, facilityId,
+                checkGroupMembershipAttrIdentifier);
+        boolean checkGroupMembership = attributeValue != null && attributeValue.valueAsBoolean();
+        if (!checkGroupMembership) {
+            return true;
+        }
+
+        List<Group> groups = adapter.getFacilityGroupsWhereUserIsValidMember(userId, facilityId);
+        return !groups.isEmpty();
     }
 
 }

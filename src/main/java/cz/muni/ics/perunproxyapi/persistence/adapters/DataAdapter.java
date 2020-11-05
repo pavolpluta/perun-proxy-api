@@ -4,7 +4,6 @@ package cz.muni.ics.perunproxyapi.persistence.adapters;
 import cz.muni.ics.perunproxyapi.persistence.enums.Entity;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
-import cz.muni.ics.perunproxyapi.persistence.models.Affiliation;
 import cz.muni.ics.perunproxyapi.persistence.models.Facility;
 import cz.muni.ics.perunproxyapi.persistence.models.Group;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue;
@@ -14,6 +13,7 @@ import lombok.NonNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Methods for fetching data.
@@ -199,5 +199,48 @@ public interface DataAdapter {
     User findByIdentifiers(@NonNull String idpIdentifier,
                            @NonNull List<String> identifiers,
                            @NonNull List<String> attrIdentifiers);
+
+    /**
+     * Get facility groups where user is valid member.
+     *
+     * @param userId User id.
+     * @param facilityId Facility id.
+     * @return List of facility groups where user is valid member (filled or empty).
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    List<Group> getFacilityGroupsWhereUserIsValidMember(@NonNull Long userId, @NonNull Long facilityId)
+            throws PerunUnknownException, PerunConnectionException;
+
+    /**
+     * Check if user if valid member of at least one of the given VOs.
+     *
+     * @param userId User id.
+     * @param voIds List of VO ids.
+     * @return TRUE if user is valid member, otherwise FALSE.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    boolean isValidMemberOfAnyProvidedVo(@NonNull Long userId, @NonNull List<Long> voIds) throws PerunUnknownException, PerunConnectionException;
+
+    /**
+     * Get voIds where user is valid member.
+     *
+     * @param userId User id.
+     * @return Set of vo ids (filled or empty).
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    Set<Long> getVoIdsWhereUserIsValidMember(@NonNull Long userId) throws PerunUnknownException, PerunConnectionException;
+
+    /**
+     * Get groupIds where user is valid member.
+     *
+     * @param userId User id.
+     * @return Set of group ids (filled or empty).
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    Set<Long> getGroupIdsWhereUserIsValidMember(@NonNull Long userId) throws PerunUnknownException, PerunConnectionException;
 
 }

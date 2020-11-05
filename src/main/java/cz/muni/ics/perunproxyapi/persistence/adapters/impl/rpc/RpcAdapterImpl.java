@@ -589,7 +589,9 @@ public class RpcAdapterImpl implements FullAdapter {
     }
 
     @Override
-    public List<Affiliation> getGroupAffiliations(Long userId, String groupAffiliationsAttr) throws PerunUnknownException, PerunConnectionException {
+    public List<Affiliation> getGroupAffiliations(Long userId, String groupAffiliationsAttr)
+            throws PerunUnknownException, PerunConnectionException
+    {
         List<Affiliation> affiliations = new ArrayList<>();
 
         List<Member> userMembers = getMembersByUser(userId);
@@ -612,6 +614,60 @@ public class RpcAdapterImpl implements FullAdapter {
         }
 
         return affiliations;
+    }
+
+    @Override
+    public List<Group> getFacilityGroupsWhereUserIsValidMember(@NonNull Long userId, @NonNull Long facilityId)
+            throws PerunUnknownException, PerunConnectionException
+    {
+        Set<Long> userGroupIds = getGroupIdsWhereUserIsValidMember(userId);
+        if (userGroupIds == null || userGroupIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<Group> allowedGroups = getAllowedGroups(facilityId);
+        return allowedGroups.stream()
+                .filter(group -> userGroupIds.contains(group.getId()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean isValidMemberOfAnyProvidedVo(@NonNull Long userId, @NonNull List<Long> voIds)
+            throws PerunUnknownException, PerunConnectionException
+    {
+        Set<Long> memberVoIds = getVoIdsWhereUserIsValidMember(userId);
+        if (memberVoIds == null || memberVoIds.isEmpty()) {
+            return false;
+        }
+        return !Collections.disjoint(voIds, memberVoIds);
+    }
+
+    @Override
+    public Set<Long> getVoIdsWhereUserIsValidMember(@NonNull Long userId)
+            throws PerunUnknownException, PerunConnectionException
+    {
+        List<Member> members = getMembersByUser(userId);
+        if (members.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        return members.stream()
+                .filter(member -> member.getStatus().equals(VALID))
+                .map(Member::getVoId)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<Long> getGroupIdsWhereUserIsValidMember(@NonNull Long userId)
+            throws PerunUnknownException, PerunConnectionException
+    {
+        List<Group> userGroups = getUserGroups(userId);
+        if (userGroups == null || userGroups.isEmpty()) {
+            return new HashSet<>();
+        }
+        return userGroups.stream()
+                .map(Group::getId)
+                .collect(Collectors.toSet());
     }
 
     // private methods
@@ -762,12 +818,12 @@ public class RpcAdapterImpl implements FullAdapter {
         return user;
     }
 
-    private List<Member> getMembersByUser(@NonNull Long userId) throws PerunUnknownException, PerunConnectionException {
+    private List<Group> getAllowedGroups(@NonNull Long facilityId) throws PerunUnknownException, PerunConnectionException {
         Map<String, Object> params = new LinkedHashMap<>();
-        params.put(PARAM_USER, userId);
+        params.put(PARAM_FACILITY, facilityId);
 
-        JsonNode perunResponse = connectorRpc.post(MEMBERS_MANAGER, "getMembersByUser", params);
-        return RpcMapper.mapMembers(perunResponse);
+        JsonNode perunResponse = connectorRpc.post(FACILITIES_MANAGER, "getAllowedGroups", params);
+        return RpcMapper.mapGroups(perunResponse);
     }
 
     private List<Group> getGroupsWhereMemberIsActive(@NonNull Long memberId)
@@ -777,6 +833,14 @@ public class RpcAdapterImpl implements FullAdapter {
 
         JsonNode perunResponse = connectorRpc.post(GROUPS_MANAGER, "getGroupsWhereMemberIsActive", params);
         return RpcMapper.mapGroups(perunResponse);
+    }
+
+    private List<Member> getMembersByUser(@NonNull Long userId) throws PerunUnknownException, PerunConnectionException {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put(PARAM_USER, userId);
+
+        JsonNode perunResponse = connectorRpc.post(MEMBERS_MANAGER, "getMembersByUser", params);
+        return RpcMapper.mapMembers(perunResponse);
     }
 
     private Facility returnFacility(Facility facility, String rpIdentifier) {

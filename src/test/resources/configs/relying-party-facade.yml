@@ -1,1 +1,18 @@
 ---
+
+- methodName: "get_entitlements"
+  configuration:
+    adapter: "RPC"
+    prefix: "urn:example"
+    authority: "example.cz"
+    forwarded_entitlements: "urn:user:attribute-def:def:forwardedEntitlements"
+    resource_capabilities: "urn:resource:attribute-def:def:capabilities"
+    facility_capabilities: "urn:facility:attribute-def:def:capabilities"
+
+- methodName: "has_access_to_service"
+  configuration:
+    adapter: "RPC"
+    prod_vo_ids: [1, 2, 3, 4, 5]
+    test_vo_ids: [6, 7, 8, 9, 10]
+    check_group_membership: "urn:perun:facility:attribute-def:def:checkGroupMembership"
+    is_test_sp: "urn:perun:facility:attribute-def:def:isTestSp"

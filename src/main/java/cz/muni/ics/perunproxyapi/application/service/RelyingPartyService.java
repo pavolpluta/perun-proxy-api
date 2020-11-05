@@ -50,4 +50,27 @@ public interface RelyingPartyService {
     Facility getFacilityByIdentifier(@NonNull DataAdapter adapter, @NonNull String rpIdentifier)
             throws PerunUnknownException, PerunConnectionException;
 
+    /**
+     * Check if user has access to the service.
+     *
+     * @param adapter Adapter to be used
+     * @param facilityId Facility id.
+     * @param userId User id.
+     * @param testVoIds Ids of test VOs.
+     * @param prodVoIds Ids of production VOs.
+     * @param checkGroupMembershipAttrIdentifier Identifier for the checkGroupMembership attribute.
+     * @param isTestSpIdentifier Identifier for the isTestSp attribute.
+     * @return TRUE if user has access to service, otherwise FALSE.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    boolean hasAccessToService(@NonNull DataAdapter adapter,
+                               @NonNull Long facilityId,
+                               @NonNull Long userId,
+                               @NonNull List<Long> testVoIds,
+                               @NonNull List<Long> prodVoIds,
+                               @NonNull String checkGroupMembershipAttrIdentifier,
+                               @NonNull String isTestSpIdentifier)
+            throws PerunUnknownException, PerunConnectionException;
+
 }
