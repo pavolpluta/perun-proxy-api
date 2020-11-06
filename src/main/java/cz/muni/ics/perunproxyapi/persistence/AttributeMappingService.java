@@ -8,12 +8,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,21 +42,21 @@ import java.util.Set;
 @ToString
 @Getter
 @Component
+@ConfigurationProperties(prefix = "attributes")
 @Slf4j
 public class AttributeMappingService {
 
-    private final Map<String, AttributeObjectMapping> attributeMap = new HashMap<>();
+    private final List<String> paths = new ArrayList<>();
 
-    @Value("${attributes.path}")
-    private String path;
+    private final Map<String, AttributeObjectMapping> attributeMap = new HashMap<>();
 
     /**
      * Initializes attributes and stores them in attributeMap property.
      */
     @PostConstruct
     public void postInit() {
-        if (path != null && !path.isEmpty()) {
-            initAttrMappings(path);
+        if (!paths.isEmpty()) {
+            initAttrMappings(paths);
         } else {
             log.warn("No path for AttributeMapping file given, no mappings initialized");
         }
@@ -101,28 +102,27 @@ public class AttributeMappingService {
     /**
      * Handles initialization of attributes into attributeMap.
      *
-     * @param path String path to file with attributes
+     * @param paths List of string paths to files with attributes
      */
-    private void initAttrMappings(String path) {
-        try {
-            List<AttributeObjectMapping> attrsMapping = getAttributesFromYamlFile(path);
-            if (attrsMapping != null) {
-                for (AttributeObjectMapping aom : attrsMapping) {
-                    if (attributeMap.containsKey(aom.getIdentifier())) {
-                        log.error("Duplicate identifier found: {}, {}. Correct your config.",
-                                aom, attributeMap.get(aom.getIdentifier()));
-                        throw new IllegalStateException("Identifier (" + aom.getIdentifier()
-                                + ") for attribute was already used, check your config!");
+    private void initAttrMappings(List<String> paths) {
+        for (String path: paths) {
+            try {
+                List<AttributeObjectMapping> attrsMapping = getAttributesFromYamlFile(path);
+                log.trace("Reading attributes from file '{}'", path);
+
+                if (attrsMapping != null) {
+                    for (AttributeObjectMapping aom : attrsMapping) {
+                        if (aom.getLdapName() != null && aom.getLdapName().trim().isEmpty()) {
+                            aom.setLdapName(null);
+                        }
+                        attributeMap.put(aom.getIdentifier(), aom);
                     }
-                    if (aom.getLdapName() != null && aom.getLdapName().trim().isEmpty()) {
-                        aom.setLdapName(null);
-                    }
-                    attributeMap.put(aom.getIdentifier(), aom);
                 }
                 log.trace("Attributes were initialized: {}", attributeMap.toString());
+
+            } catch (IOException ex) {
+                log.warn("Reading attributes from config file '{}' was not successful.", path);
             }
-        } catch (IOException ex) {
-            log.warn("Reading attributes from config was not successful.");
         }
     }
 

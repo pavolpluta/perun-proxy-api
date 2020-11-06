@@ -26,7 +26,8 @@ connector:
     use_tls: true
 
 attributes:
-  path: /etc/perun/attributes.yml
+  paths:
+    - "/etc/perun/attributes.yml"
   identifiers:
     relying_party: "urn:perun:facility:attribute-def:def:entityID"
     login: "urn:perun:user:attribute-def:def:login-namespace:example"

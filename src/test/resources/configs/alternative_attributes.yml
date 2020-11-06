@@ -1,0 +1,11 @@
+---
+
+- identifier: "urn:perun:facility:attribute-def:def:isTestSp"
+  rpcName: "urn:perun:facility:attribute-def:def:isTestSpAlternative"
+  ldapName: "isTestSpAlternative"
+  attrType: BOOLEAN
+
+- identifier: "user:Attr4"
+  rpcName: "user:Attr4Rpc"
+  ldapName : "userAttr4Ldap"
+  attrType: STRING

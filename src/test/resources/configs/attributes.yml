@@ -20,6 +20,7 @@
 - identifier: "urn:perun:facility:attribute-def:def:isTestSp"
   rpcName: "urn:perun:facility:attribute-def:def:isTestSp"
   ldapName: "isTestSp"
+  attrType: BOOLEAN
 
 # USER
 - identifier: "user:Attr1"
