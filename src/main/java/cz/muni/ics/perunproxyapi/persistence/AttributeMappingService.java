@@ -8,13 +8,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,11 +41,11 @@ import java.util.Set;
 @ToString
 @Getter
 @Component
-@ConfigurationProperties(prefix = "attributes")
 @Slf4j
 public class AttributeMappingService {
 
-    private final List<String> paths = new ArrayList<>();
+    @Autowired
+    private List<String> paths;
 
     private final Map<String, AttributeObjectMapping> attributeMap = new HashMap<>();
 
