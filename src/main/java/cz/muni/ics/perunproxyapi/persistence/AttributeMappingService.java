@@ -118,12 +118,14 @@ public class AttributeMappingService {
                         attributeMap.put(aom.getIdentifier(), aom);
                     }
                 }
-                log.trace("Attributes were initialized: {}", attributeMap.toString());
+                log.trace("Attributes from config file '{}' were initialized", path);
 
             } catch (IOException ex) {
                 log.warn("Reading attributes from config file '{}' was not successful.", path);
             }
         }
+
+        log.trace("All attributes were initialized successfully.");
     }
 
     /**
