@@ -1,6 +1,5 @@
 package cz.muni.ics.perunproxyapi.persistence.adapters;
 
-import cz.muni.ics.perunproxyapi.persistence.adapters.impl.ldap.LdapAdapterImpl;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.AttributeObjectMapping;
@@ -10,13 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import static cz.muni.ics.perunproxyapi.persistence.adapters.impl.ldap.LdapAdapterImpl.PERUN_GROUP_ID;
-import static cz.muni.ics.perunproxyapi.persistence.adapters.impl.ldap.LdapAdapterImpl.PERUN_VO_ID;
-import static cz.muni.ics.perunproxyapi.persistence.enums.Entity.FACILITY;
 import static cz.muni.ics.perunproxyapi.persistence.enums.Entity.USER;
 
 /**
@@ -69,9 +63,21 @@ public class AdapterUtils {
     }
 
     /**
-     * Extract LDAP name from the mapping. Name is considered as required.
+     * Extract LDAP name from the mapping.
      * @param mapping Mapping object.
-     * @return Extracted name. If the mapping is null or LDAP name is empty, an exception is thrown.
+     * @return Extracted name. If the mapping is null or LDAP name is empty, null is returned
+     */
+    public static String getLdapNameFromMapping(AttributeObjectMapping mapping) {
+        if (mapping == null || !StringUtils.hasText(mapping.getLdapName())) {
+            return null;
+        }
+        return mapping.getLdapName();
+    }
+
+    /**
+     * Extract RPC name from the mapping. Name is considered as required.
+     * @param mapping Mapping object.
+     * @return Extracted name. If the mapping is null or RPC name is empty, an exception is thrown.
      */
     public static String getRequiredRpcNameFromMapping(AttributeObjectMapping mapping) {
         if (mapping == null || !StringUtils.hasText(mapping.getRpcName())) {
@@ -79,6 +85,18 @@ public class AdapterUtils {
             throw new IllegalArgumentException("Name of the attribute in RPC is required.");
         }
 
+        return mapping.getRpcName();
+    }
+
+    /**
+     * Extract RPC name from the mapping.
+     * @param mapping Mapping object.
+     * @return Extracted name. If the mapping is null or RPC name is empty, null is returned.
+     */
+    public static String getRpcNameFromMapping(AttributeObjectMapping mapping) {
+        if (mapping == null || !StringUtils.hasText(mapping.getRpcName())) {
+            return null;
+        }
         return mapping.getRpcName();
     }
 

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import cz.muni.ics.perunproxyapi.TestUtils;
 import cz.muni.ics.perunproxyapi.persistence.AttributeMappingService;
 import cz.muni.ics.perunproxyapi.persistence.adapters.FullAdapter;
+import cz.muni.ics.perunproxyapi.persistence.configs.AttributeMappingServiceProperties;
 import cz.muni.ics.perunproxyapi.persistence.connectors.PerunConnectorRpc;
 import cz.muni.ics.perunproxyapi.persistence.enums.Entity;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.InternalErrorException;
@@ -87,10 +88,12 @@ public class RpcAdapterImplUserRelatedTest {
     @Autowired
     private AttributeMappingService attributeMappingService;
 
+    @Autowired
+    private AttributeMappingServiceProperties attributeMappingServiceProperties;
+
     @BeforeEach
     public void setUp() throws PerunUnknownException, PerunConnectionException {
-        this.rpcAdapter = new RpcAdapterImpl(connector, this.attributeMappingService,
-                rpIdentifierAttrIdentifier, additionalIdentifiersAttrIdentifier, loginAttrIdentifier);
+        this.rpcAdapter = new RpcAdapterImpl(connector, this.attributeMappingService, attributeMappingServiceProperties);
         sampleUser = TestUtils.createSampleUser(USER_LOGIN);
         sampleUserJson = TestUtils.getJsonForUser(sampleUser);
         sampleUserExtSource = TestUtils.createSampleUserExtSource();
