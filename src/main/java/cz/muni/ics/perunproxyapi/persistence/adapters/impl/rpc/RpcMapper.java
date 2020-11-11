@@ -108,9 +108,9 @@ public class RpcMapper {
         }
 
         Long id = getRequiredFieldAsLong(json, ID);
-        Long parentGroupId = getRequiredFieldAsLong(json, PARENT_GROUP_ID);
+        Long parentGroupId = getFieldAsLong(json, PARENT_GROUP_ID);
         String name = getRequiredFieldAsString(json, NAME);
-        String description = getRequiredFieldAsString(json, DESCRIPTION);
+        String description = getFieldAsString(json, DESCRIPTION);
         Long voId = getRequiredFieldAsLong(json, VO_ID);
 
         return new Group(id, parentGroupId, name, description, null, voId);
@@ -150,7 +150,7 @@ public class RpcMapper {
 
         Long id = getRequiredFieldAsLong(json, ID);
         String name = getRequiredFieldAsString(json, NAME);
-        String description = getRequiredFieldAsString(json, DESCRIPTION);
+        String description = getFieldAsString(json, DESCRIPTION);
 
         return new Facility(id, name, description);
     }
@@ -231,11 +231,10 @@ public class RpcMapper {
         Long voId = getRequiredFieldAsLong(json, VO_ID);
         Long facilityId = getRequiredFieldAsLong(json, FACILITY_ID);
         String name = getRequiredFieldAsString(json, NAME);
-        String description = getRequiredFieldAsString(json, DESCRIPTION);
+        String description = getFieldAsString(json, DESCRIPTION);
 
         Vo vo = null;
-
-        if (json.has("vo")) {
+        if (json.hasNonNull("vo")) {
             JsonNode voJson = json.get("vo");
             vo = RpcMapper.mapVo(voJson);
         }
@@ -357,7 +356,7 @@ public class RpcMapper {
 
         Long id = getRequiredFieldAsLong(json, ID);
         String login = getRequiredFieldAsString(json, LOGIN);
-        ExtSource extSource = RpcMapper.mapExtSource(getRequiredFieldPath(json, EXT_SOURCE));
+        ExtSource extSource = RpcMapper.mapExtSource(getRequiredFieldAsJsonNode(json, EXT_SOURCE));
         int loa = getRequiredFieldAsInt(json, LOA);
         boolean persistent = getRequiredFieldAsBoolean(json, PERSISTENT);
         Timestamp lastAccess = Timestamp.valueOf(getRequiredFieldAsString(json, LAST_ACCESS));
@@ -401,15 +400,15 @@ public class RpcMapper {
         Long id = getRequiredFieldAsLong(json, ID);
         String friendlyName = getRequiredFieldAsString(json, FRIENDLY_NAME);
         String namespace = getRequiredFieldAsString(json, NAMESPACE);
-        String description = getRequiredFieldAsString(json, DESCRIPTION);
+        String description = getFieldAsString(json, DESCRIPTION);
         String type = getRequiredFieldAsString(json, TYPE);
         String displayName = getRequiredFieldAsString(json, DISPLAY_NAME);
         boolean writable = getRequiredFieldAsBoolean(json, WRITABLE);
         boolean unique = getRequiredFieldAsBoolean(json, UNIQUE);
         String entity = getRequiredFieldAsString(json, ENTITY);
-        String baseFriendlyName = getRequiredFieldAsString(json, BASE_FRIENDLY_NAME);
-        String friendlyNameParameter = getRequiredFieldAsString(json, FRIENDLY_NAME_PARAMETER);
-        JsonNode value = getRequiredFieldAsJsonNode(json, VALUE);
+        String baseFriendlyName = getFieldAsString(json, BASE_FRIENDLY_NAME);
+        String friendlyNameParameter = getFieldAsString(json, FRIENDLY_NAME_PARAMETER);
+        JsonNode value = getFieldAsJsonNode(json, VALUE);
 
         return new PerunAttribute(id, friendlyName, namespace, description, type, displayName,
                 writable, unique, entity, baseFriendlyName, friendlyNameParameter, value);
@@ -462,9 +461,23 @@ public class RpcMapper {
         return json.get(name).asLong();
     }
 
+    private static Long getFieldAsLong(JsonNode json, String name) {
+        if (!json.hasNonNull(name)) {
+            return 0L;
+        }
+        return json.get(name).asLong();
+    }
+
     private static int getRequiredFieldAsInt(JsonNode json, String name) {
         if (!json.hasNonNull(name)) {
             throw new MissingFieldException();
+        }
+        return json.get(name).asInt();
+    }
+
+    private static int getFieldAsInt(JsonNode json, String name) {
+        if (!json.hasNonNull(name)) {
+            return 0;
         }
         return json.get(name).asInt();
     }
@@ -476,6 +489,13 @@ public class RpcMapper {
         return json.get(name).asBoolean();
     }
 
+    private static boolean getFieldAsBoolean(JsonNode json, String name) {
+        if (!json.hasNonNull(name)) {
+            return false;
+        }
+        return json.get(name).asBoolean();
+    }
+
     private static String getRequiredFieldAsString(JsonNode json, String name) {
         if (!json.hasNonNull(name)) {
             throw new MissingFieldException();
@@ -483,6 +503,12 @@ public class RpcMapper {
         return json.get(name).asText();
     }
 
+    private static String getFieldAsString(JsonNode json, String name) {
+        if (!json.hasNonNull(name)) {
+            return "";
+        }
+        return json.get(name).asText();
+    }
 
     private static JsonNode getRequiredFieldAsJsonNode(JsonNode json, String name) {
         if (!json.hasNonNull(name)) {
@@ -491,11 +517,8 @@ public class RpcMapper {
         return json.get(name);
     }
 
-    private static JsonNode getRequiredFieldPath(JsonNode json, String name) {
-        if (!json.hasNonNull(name)) {
-            throw new MissingFieldException();
-        }
-        return json.path(name);
+    private static JsonNode getFieldAsJsonNode(JsonNode json, String name) {
+        return json.get(name);
     }
 
 }

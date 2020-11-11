@@ -2,10 +2,10 @@ package cz.muni.ics.perunproxyapi.persistence.adapters.impl.rpc;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
-import cz.muni.ics.perunproxyapi.persistence.models.Affiliation;
 import cz.muni.ics.perunproxyapi.persistence.AttributeMappingService;
 import cz.muni.ics.perunproxyapi.persistence.adapters.AdapterUtils;
 import cz.muni.ics.perunproxyapi.persistence.adapters.FullAdapter;
+import cz.muni.ics.perunproxyapi.persistence.configs.AttributeMappingServiceProperties;
 import cz.muni.ics.perunproxyapi.persistence.connectors.PerunConnectorRpc;
 import cz.muni.ics.perunproxyapi.persistence.enums.Entity;
 import cz.muni.ics.perunproxyapi.persistence.enums.MemberStatus;
@@ -13,6 +13,7 @@ import cz.muni.ics.perunproxyapi.persistence.exceptions.ConfigurationException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.InternalErrorException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
+import cz.muni.ics.perunproxyapi.persistence.models.Affiliation;
 import cz.muni.ics.perunproxyapi.persistence.models.AttributeObjectMapping;
 import cz.muni.ics.perunproxyapi.persistence.models.Facility;
 import cz.muni.ics.perunproxyapi.persistence.models.Group;
@@ -26,7 +27,6 @@ import cz.muni.ics.perunproxyapi.persistence.models.Vo;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -102,33 +102,27 @@ public class RpcAdapterImpl implements FullAdapter {
     private final PerunConnectorRpc connectorRpc;
     private final AttributeMappingService attributeMappingService;
 
-    @NonNull private final String rpIdentifierAttr;
-    @NonNull private final String additionalIdentifiersAttr;
+    private final String rpIdentifierAttr;
+    private final String additionalIdentifiersAttr;
     @NonNull private final String loginAttr;
 
     @Autowired
     public RpcAdapterImpl(@NonNull PerunConnectorRpc perunConnectorRpc,
                           @NonNull AttributeMappingService attributeMappingService,
-                          @Value("${attributes.identifiers.relying_party}") String rpIdentifierAttrIdentifier,
-                          @Value("${attributes.identifiers.additional_identifiers}") String additionalIdentifiersAttrIdentifier,
-                          @Value("${attributes.identifiers.login}") String loginAttrIdentifier)
+                          @NonNull AttributeMappingServiceProperties amsProperties)
     {
         this.connectorRpc = perunConnectorRpc;
         this.attributeMappingService = attributeMappingService;
 
         try {
-            this.rpIdentifierAttr = AdapterUtils.getRequiredRpcNameFromMapping(
-                    this.attributeMappingService.getMappingByIdentifier(rpIdentifierAttrIdentifier));
-            this.additionalIdentifiersAttr = AdapterUtils.getRequiredRpcNameFromMapping(
-                    this.attributeMappingService.getMappingByIdentifier(additionalIdentifiersAttrIdentifier));
+            this.rpIdentifierAttr = AdapterUtils.getRpcNameFromMapping(this.attributeMappingService
+                    .getMappingByIdentifier(amsProperties.getRpIdentifier(), false));
+            this.additionalIdentifiersAttr = AdapterUtils.getRpcNameFromMapping(this.attributeMappingService
+                    .getMappingByIdentifier(amsProperties.getAdditionalIdentifiersIdentifier(), false));
             this.loginAttr = AdapterUtils.getRequiredRpcNameFromMapping(
-                    this.attributeMappingService.getMappingByIdentifier(loginAttrIdentifier));
+                    this.attributeMappingService.getMappingByIdentifier(amsProperties.getLoginIdentifier()));
         } catch (IllegalArgumentException e) {
-            log.error("An exception caught when fetching mappings for required attributes.\nRequired attributes:" +
-                            "\nattributes.identifiers.relying_party = {}\n" +
-                            "\nattributes.identifiers.additional_identifiers = {}\n" +
-                            "\nattributes.identifiers.login = {}\n", rpIdentifierAttrIdentifier,
-                    additionalIdentifiersAttrIdentifier, loginAttrIdentifier, e);
+            log.error("An exception caught when fetching mappings for required attributes.", e);
             throw new ConfigurationException("Could not fetch mappings for required RPC adapter attributes.", e);
         }
     }
@@ -314,6 +308,9 @@ public class RpcAdapterImpl implements FullAdapter {
     public List<Group> getSpGroups(@NonNull String spIdentifier)
             throws PerunUnknownException, PerunConnectionException
     {
+        if (rpIdentifierAttr == null) {
+            throw new ConfigurationException("RP Identifier attr is not set, check your configuration");
+        }
         List<Facility> facilities = this.getFacilitiesByAttribute(rpIdentifierAttr, spIdentifier);
         if (facilities == null || facilities.size() == 0) {
             return new ArrayList<>();
@@ -404,6 +401,9 @@ public class RpcAdapterImpl implements FullAdapter {
     public Facility getFacilityByRpIdentifier(@NonNull String rpIdentifier)
             throws PerunUnknownException, PerunConnectionException
     {
+        if (rpIdentifierAttr == null) {
+            throw new ConfigurationException("RP Identifier attr is not set, check your configuration");
+        }
         Map<String, Object> params = new LinkedHashMap<>();
 
         params.put(PARAM_ATTRIBUTE_NAME, rpIdentifierAttr);

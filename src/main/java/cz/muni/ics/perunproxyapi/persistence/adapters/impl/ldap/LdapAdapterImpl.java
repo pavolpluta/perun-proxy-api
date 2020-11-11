@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import cz.muni.ics.perunproxyapi.persistence.AttributeMappingService;
 import cz.muni.ics.perunproxyapi.persistence.adapters.AdapterUtils;
 import cz.muni.ics.perunproxyapi.persistence.adapters.DataAdapter;
+import cz.muni.ics.perunproxyapi.persistence.configs.AttributeMappingServiceProperties;
 import cz.muni.ics.perunproxyapi.persistence.connectors.PerunConnectorLdap;
 import cz.muni.ics.perunproxyapi.persistence.connectors.properties.LdapProperties;
 import cz.muni.ics.perunproxyapi.persistence.enums.AttributeType;
@@ -25,7 +26,6 @@ import cz.muni.ics.perunproxyapi.persistence.models.Vo;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ldap.core.ContextMapper;
 import org.springframework.ldap.core.DirContextAdapter;
 import org.springframework.ldap.filter.AndFilter;
@@ -131,37 +131,36 @@ public class LdapAdapterImpl implements DataAdapter {
     @NonNull private final String loginAttr;
 
     @Autowired
-    public LdapAdapterImpl(PerunConnectorLdap connectorLdap,
-                           AttributeMappingService attributeMappingService,
-                           LdapProperties ldapProperties,
-                           @Value("${attributes.identifiers.relying_party}") String rpIdentifierAttrIdentifier,
-                           @Value("${attributes.identifiers.additional_identifiers}") String additionalIdentifiersAttrIdentifier,
-                           @Value("${attributes.identifiers.login}") String loginAttrIdentifier)
+    public LdapAdapterImpl(@NonNull PerunConnectorLdap connectorLdap,
+                           @NonNull AttributeMappingService attributeMappingService,
+                           @NonNull LdapProperties ldapProperties,
+                           @NonNull AttributeMappingServiceProperties attributeMappingServiceProperties)
     {
         this.connectorLdap = connectorLdap;
         this.attributeMappingService = attributeMappingService;
         this.baseDn = ldapProperties.getBaseDn();
 
         try {
-            this.rpIdentifierAttr = AdapterUtils.getRequiredLdapNameFromMapping(
-                    this.attributeMappingService.getMappingByIdentifier(rpIdentifierAttrIdentifier));
-            this.additionalIdentifiersAttr = AdapterUtils.getRequiredLdapNameFromMapping(
-                    this.attributeMappingService.getMappingByIdentifier(additionalIdentifiersAttrIdentifier));
-            this.loginAttr = AdapterUtils.getRequiredLdapNameFromMapping(
-                    this.attributeMappingService.getMappingByIdentifier(loginAttrIdentifier));
+            this.rpIdentifierAttr = AdapterUtils.getLdapNameFromMapping(this.attributeMappingService
+                    .getMappingByIdentifier(attributeMappingServiceProperties.getRpIdentifier(), false));
+            this.additionalIdentifiersAttr = AdapterUtils.getLdapNameFromMapping(this.attributeMappingService
+                    .getMappingByIdentifier(attributeMappingServiceProperties.getAdditionalIdentifiersIdentifier(), false));
+            this.loginAttr = AdapterUtils.getRequiredLdapNameFromMapping(this.attributeMappingService
+                    .getMappingByIdentifier(attributeMappingServiceProperties.getLoginIdentifier()));
         } catch (IllegalArgumentException e) {
-            log.error("An exception caught when fetching mappings for required attributes.\nRequired attributes:" +
-                            "\nattributes.identifiers.relying_party = {}\n" +
-                            "\nattributes.identifiers.additional_identifiers = {}\n" +
-                            "\nattributes.identifiers.login = {}\n", rpIdentifierAttrIdentifier,
-                    additionalIdentifiersAttrIdentifier, loginAttrIdentifier, e);
+            log.error("An exception caught when fetching mappings for required attributes.", e);
             throw new ConfigurationException("Could not fetch mappings for required RPC adapter attributes.", e);
         }
 
         this.PERUN_USER_REQUIRED_ATTRIBUTES = new String[] { PERUN_USER_ID, SN, loginAttr };
         this.PERUN_USER_BEAN_ATTRIBUTES = new String[] { PERUN_USER_ID, GIVEN_NAME, SN, loginAttr };
-        this.PERUN_FACILITY_BEAN_ATTRIBUTES = new String[] { PERUN_FACILITY_ID, CN, DESCRIPTION, rpIdentifierAttr };
-        this.PERUN_FACILITY_REQUIRED_ATTRIBUTES = new String[] { PERUN_FACILITY_ID, CN, rpIdentifierAttr };
+        if (rpIdentifierAttr == null) {
+            this.PERUN_FACILITY_BEAN_ATTRIBUTES = new String[]{PERUN_FACILITY_ID, CN, DESCRIPTION};
+            this.PERUN_FACILITY_REQUIRED_ATTRIBUTES = new String[] { PERUN_FACILITY_ID, CN };
+        } else {
+            this.PERUN_FACILITY_BEAN_ATTRIBUTES = new String[]{PERUN_FACILITY_ID, CN, DESCRIPTION, rpIdentifierAttr};
+            this.PERUN_FACILITY_REQUIRED_ATTRIBUTES = new String[] { PERUN_FACILITY_ID, CN, rpIdentifierAttr };
+        }
     }
 
     @Override
@@ -334,6 +333,9 @@ public class LdapAdapterImpl implements DataAdapter {
     @Override
     public Facility getFacilityByRpIdentifier(@NonNull String rpIdentifier)
     {
+        if (rpIdentifierAttr == null) {
+            throw new ConfigurationException("RP Identifier attr is not set, check your configuration");
+        }
         Filter filter = new AndFilter()
                 .and(new EqualsFilter(OBJECT_CLASS, PERUN_FACILITY))
                 .and(new EqualsFilter(rpIdentifierAttr, rpIdentifier));
@@ -427,6 +429,9 @@ public class LdapAdapterImpl implements DataAdapter {
                                   @NonNull List<String> identifiers,
                                   @NonNull List<String> attrIdentifiers)
     {
+        if (additionalIdentifiersAttr == null) {
+            throw new ConfigurationException("RP Identifier attr is not set, check your configuration");
+        }
         Set<AttributeObjectMapping> mappings = this.getAttributeMappings(attrIdentifiers);
         OrFilter identifiersFilter = new OrFilter();
         for (String identifier : identifiers) {

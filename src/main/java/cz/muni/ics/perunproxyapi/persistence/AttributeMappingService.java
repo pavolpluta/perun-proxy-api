@@ -3,17 +3,21 @@ package cz.muni.ics.perunproxyapi.persistence;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import cz.muni.ics.perunproxyapi.persistence.configs.AttributeMappingServiceProperties;
 import cz.muni.ics.perunproxyapi.persistence.models.AttributeObjectMapping;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,25 +41,29 @@ import java.util.Set;
  * @author Dominik Frantisek Bucik <bucik@ics.muni.cz>
  * @author Dominik Baranek <baranek@ics.muni.cz>
  */
-@NoArgsConstructor
-@ToString
 @Getter
+@Setter
+@ToString
+@EqualsAndHashCode
 @Component
 @Slf4j
 public class AttributeMappingService {
 
     private final Map<String, AttributeObjectMapping> attributeMap = new HashMap<>();
+    private final List<String> paths = new ArrayList<>();
 
-    @Value("${attributes.path}")
-    private String path;
+    @Autowired
+    public AttributeMappingService(@NonNull AttributeMappingServiceProperties attributeMappingServiceProperties) {
+        this.paths.addAll(attributeMappingServiceProperties.getPaths());
+    }
 
     /**
      * Initializes attributes and stores them in attributeMap property.
      */
     @PostConstruct
     public void postInit() {
-        if (path != null && !path.isEmpty()) {
-            initAttrMappings(path);
+        if (!paths.isEmpty()) {
+            initAttrMappings(paths);
         } else {
             log.warn("No path for AttributeMapping file given, no mappings initialized");
         }
@@ -68,9 +76,25 @@ public class AttributeMappingService {
      * @return AttributeObjectMapping attribute
      */
     public AttributeObjectMapping getMappingByIdentifier(String identifier) {
-        if (!attributeMap.containsKey(identifier)) {
-            log.warn("Could not fetch mapping for identifier {}. Check your attribute mapping file.", identifier);
-            throw new IllegalArgumentException("Unknown identifier, check your configuration");
+        return getMappingByIdentifier(identifier, true);
+    }
+
+    /**
+     * Finds AttributeObjectMapping object by attribute identifier.
+     *
+     * @param identifier String identifier of attribute
+     * @return AttributeObjectMapping attribute
+     */
+    public AttributeObjectMapping getMappingByIdentifier(String identifier, boolean throwExc) {
+        if (identifier == null || !attributeMap.containsKey(identifier)) {
+            if (throwExc) {
+                log.error("Could not fetch mapping for identifier {}. Check your attribute mapping file.", identifier);
+                throw new IllegalArgumentException("Unknown identifier " + identifier + " check your configuration");
+            } else {
+                log.warn("Could not fetch mapping for identifier {}. Check your attribute mapping file. Returning null",
+                        identifier);
+                return null;
+            }
         }
 
         return attributeMap.get(identifier);
@@ -86,12 +110,7 @@ public class AttributeMappingService {
         Set<AttributeObjectMapping> mappings = new HashSet<>();
         if (identifiers != null) {
             for (String identifier : identifiers) {
-                try {
-                    mappings.add(getMappingByIdentifier(identifier));
-                } catch (IllegalArgumentException e) {
-                    log.warn("Caught {} when getting mappings, check your configuration for identifier {}",
-                            e.getClass(), identifier, e);
-                }
+                mappings.add(getMappingByIdentifier(identifier, false));
             }
         }
 
@@ -101,29 +120,30 @@ public class AttributeMappingService {
     /**
      * Handles initialization of attributes into attributeMap.
      *
-     * @param path String path to file with attributes
+     * @param paths List of string paths to files with attributes
      */
-    private void initAttrMappings(String path) {
-        try {
-            List<AttributeObjectMapping> attrsMapping = getAttributesFromYamlFile(path);
-            if (attrsMapping != null) {
-                for (AttributeObjectMapping aom : attrsMapping) {
-                    if (attributeMap.containsKey(aom.getIdentifier())) {
-                        log.error("Duplicate identifier found: {}, {}. Correct your config.",
-                                aom, attributeMap.get(aom.getIdentifier()));
-                        throw new IllegalStateException("Identifier (" + aom.getIdentifier()
-                                + ") for attribute was already used, check your config!");
+    private void initAttrMappings(List<String> paths) {
+        for (String path: paths) {
+            try {
+                List<AttributeObjectMapping> attrsMapping = getAttributesFromYamlFile(path);
+                log.trace("Reading attributes from file '{}'", path);
+
+                if (attrsMapping != null) {
+                    for (AttributeObjectMapping aom : attrsMapping) {
+                        if (aom.getLdapName() != null && aom.getLdapName().trim().isEmpty()) {
+                            aom.setLdapName(null);
+                        }
+                        attributeMap.put(aom.getIdentifier(), aom);
                     }
-                    if (aom.getLdapName() != null && aom.getLdapName().trim().isEmpty()) {
-                        aom.setLdapName(null);
-                    }
-                    attributeMap.put(aom.getIdentifier(), aom);
                 }
-                log.trace("Attributes were initialized: {}", attributeMap.toString());
+                log.trace("Attributes from config file '{}' were initialized", path);
+
+            } catch (IOException ex) {
+                log.warn("Reading attributes from config file '{}' was not successful.", path);
             }
-        } catch (IOException ex) {
-            log.warn("Reading attributes from config was not successful.");
         }
+
+        log.trace("All attributes were initialized successfully.");
     }
 
     /**
@@ -134,8 +154,7 @@ public class AttributeMappingService {
      * @throws IOException thrown when file does not exist, is empty or does not have the right structure
      */
     private List<AttributeObjectMapping> getAttributesFromYamlFile(String path) throws IOException {
-        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-
-        return mapper.readValue(new File(path), new TypeReference<>() {});
+        return new ObjectMapper(new YAMLFactory()).readValue(new File(path), new TypeReference<>() {});
     }
+
 }
