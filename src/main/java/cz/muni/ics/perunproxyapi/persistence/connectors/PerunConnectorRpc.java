@@ -106,6 +106,7 @@ public class PerunConnectorRpc {
                         case "ResourceNotExistsException":
                         case "VoNotExistsException":
                         case "UserNotExistsException":
+                        case "UserExtSourceNotExistsException":
                             return JsonNodeFactory.instance.nullNode();
                     }
                 }

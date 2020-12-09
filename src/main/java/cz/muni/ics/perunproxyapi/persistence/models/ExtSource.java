@@ -23,6 +23,11 @@ public class ExtSource {
     @NonNull private String name;
     @NonNull private String type;
 
+    public ExtSource(String name, String type) {
+        this.setName(name);
+        this.setType(type);
+    }
+
     public ExtSource(Long id, String name, String type) {
         this.setId(id);
         this.setName(name);

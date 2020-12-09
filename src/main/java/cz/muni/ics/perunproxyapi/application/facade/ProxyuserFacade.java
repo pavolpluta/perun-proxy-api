@@ -2,12 +2,14 @@ package cz.muni.ics.perunproxyapi.application.facade;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.EntityNotFoundException;
+import cz.muni.ics.perunproxyapi.persistence.exceptions.InvalidRequestParameterException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.presentation.DTOModels.UserDTO;
 import lombok.NonNull;
 
 import javax.management.InvalidAttributeValueException;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -117,5 +119,19 @@ public interface ProxyuserFacade {
      */
     JsonNode ga4ghByLogin(@NonNull String login)
             throws PerunUnknownException, PerunConnectionException, EntityNotFoundException;
+
+    /**
+     * Create new user in Perun.
+     *
+     * @param extSourceIdentifier Identifier (name) of the ExtSource which is being created.
+     * @param attributes Attributes required for the creation of the new member, including login for the UserExtSource.
+     * @return TRUE if member was created and validated, otherwise FALSE.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     * @throws IOException Invalid I/O value occurred during conversion from JSON to list.
+     * @throws InvalidRequestParameterException Invalid parameter given in the request body.
+     */
+    boolean create(@NonNull String extSourceIdentifier, @NonNull Map<String, JsonNode> attributes)
+            throws IOException, PerunUnknownException, PerunConnectionException, InvalidRequestParameterException;
 
 }

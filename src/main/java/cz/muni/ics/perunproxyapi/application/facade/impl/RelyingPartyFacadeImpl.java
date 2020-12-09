@@ -41,6 +41,12 @@ public class RelyingPartyFacadeImpl implements RelyingPartyFacade {
     public static final String TEST_VO_IDS = "test_vo_ids";
     public static final String RP_ENVIRONMENT_ATTR = "rp_environment_attr";
     public static final String RP_ENVIRONMENT = "rp_environment";
+    public static final String CREATE_MEMBER_IN_VO = "create_member_in_vo";
+    public static final String VO_ID = "vo_id";
+    public static final String REQUIRED_ATTRIBUTES = "required_attributes";
+    public static final String LOGIN_ATTRIBUTES = "login_attributes";
+    public static final String ATTR_MAPPER = "attr_mapper";
+    public static final String CANDIDATE_ATTR_MAPPER = "candidate_attr_mapper";
 
     private final Map<String, JsonNode> methodConfigurations;
     private final AdaptersContainer adaptersContainer;

@@ -15,6 +15,8 @@ import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.Affiliation;
 import cz.muni.ics.perunproxyapi.persistence.models.AttributeObjectMapping;
+import cz.muni.ics.perunproxyapi.persistence.models.Candidate;
+import cz.muni.ics.perunproxyapi.persistence.models.ExtSource;
 import cz.muni.ics.perunproxyapi.persistence.models.Facility;
 import cz.muni.ics.perunproxyapi.persistence.models.Group;
 import cz.muni.ics.perunproxyapi.persistence.models.Member;
@@ -74,6 +76,7 @@ public class RpcAdapterImpl implements FullAdapter {
     public static final String USERS_MANAGER = "usersManager";
     public static final String VOS_MANAGER = "vosManager";
     public static final String RESOURCES_MANAGER = "resourcesManager";
+    public static final String EXT_SOURCES_MANAGER = "extSourcesManager";
 
     // PARAMS
     public static final String PARAM_USER = "user";
@@ -94,6 +97,8 @@ public class RpcAdapterImpl implements FullAdapter {
     public static final String PARAM_GROUP = "group";
     public static final String PARAM_MEMBER = "member";
     public static final String PARAM_EXT_LOGIN = "extLogin";
+    public static final String PARAM_CANDIDATE = "candidate";
+    public static final String PARAM_EXT_SOURCE_TYPE = "type";
     public static final String EXT_SOURCE_TYPE = "cz.metacentrum.perun.core.impl.ExtSourceIdp";
 
     // special
@@ -614,6 +619,44 @@ public class RpcAdapterImpl implements FullAdapter {
         }
 
         return affiliations;
+    }
+
+    @Override
+    public ExtSource getExtSourceByName(@NonNull String extSourceName) throws PerunUnknownException, PerunConnectionException {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put(PARAM_NAME, extSourceName);
+
+        JsonNode perunResponse = connectorRpc.post(EXT_SOURCES_MANAGER, "getExtSourceByName", params);
+        return RpcMapper.mapExtSource(perunResponse);
+    }
+
+    @Override
+    public ExtSource createExtSource(@NonNull String extSourceName, @NonNull String extSourceType) throws PerunUnknownException, PerunConnectionException {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put(PARAM_NAME, extSourceName);
+        params.put(PARAM_EXT_SOURCE_TYPE, EXT_SOURCE_TYPE);
+
+        JsonNode perunResponse = connectorRpc.post(EXT_SOURCES_MANAGER, "createExtSource", params);
+        return RpcMapper.mapExtSource(perunResponse);
+    }
+
+    @Override
+    public Member createMember(Long voId, Candidate candidate) throws PerunUnknownException, PerunConnectionException {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put(PARAM_VO, voId);
+        params.put(PARAM_CANDIDATE, candidate);
+
+        JsonNode perunResponse = connectorRpc.post(MEMBERS_MANAGER, "createMember", params);
+        return RpcMapper.mapMember(perunResponse);
+    }
+
+    @Override
+    public Member validateMember(Long memberId) throws PerunUnknownException, PerunConnectionException {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put(PARAM_MEMBER, memberId);
+
+        JsonNode perunResponse = connectorRpc.post(MEMBERS_MANAGER, "validateMemberAsync", params);
+        return RpcMapper.mapMember(perunResponse);
     }
 
     @Override

@@ -1,9 +1,7 @@
 package cz.muni.ics.perunproxyapi.application.facade;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import cz.muni.ics.perunproxyapi.persistence.adapters.DataAdapter;
 import cz.muni.ics.perunproxyapi.persistence.adapters.FullAdapter;
@@ -16,7 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -81,6 +81,25 @@ public class FacadeUtils {
     }
 
     /**
+     * Get Long option from method options. If option is not configured, an exception is thrown.
+     * @param key Key identifying the option.
+     * @param options JSON containing the method options.
+     * @return Extracted option as Long.
+     */
+    public static Long getRequiredLongOption(@NonNull String key, @NonNull String method,
+                                                 @NonNull JsonNode options)
+    {
+        Long option = options.hasNonNull(key) ? options.get(key).asLong() : null;
+        if (option == null) {
+            log.error("Required option {} has not been found by method {}. Check your configuration.", key, method);
+            throw new IllegalArgumentException("Required option has not been found");
+        }
+
+        return option;
+    }
+
+
+    /**
      * Get String option from method options. If option is not configured, NULL is returned.
      * For fetching required options as Strings see "FacadeUtils.getRequiredStringOption(...)" method.
      * @param key Key identifying the option.
@@ -108,6 +127,30 @@ public class FacadeUtils {
     }
 
     /**
+     * Get list of string values from method options. If option is not configured, NULL is returned.
+     *
+     * @param key Key identifying the option.
+     * @param method Which method demands for the option.
+     * @param options JSON containing the method options.
+     * @return Extracted option as list of string values.
+     * @throws IOException Invalid I/O value occurred during conversion from JSON to list of string values.
+     */
+    public static List<String> getRequiredStringListOption(@NonNull String key,@NonNull String method,
+                                                       @NonNull JsonNode options) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        List<String> values =
+                options.hasNonNull(key) ? Arrays.asList(mapper.treeToValue(options.get(key), String[].class)) : null;
+
+        if (values == null) {
+            log.error("Required option {} has not been found by method {}. " +
+                    "Check your configuration.", key, method);
+            throw new IllegalArgumentException("Required option has not been found.");
+        }
+
+        return values;
+    }
+
+    /**
      * Get list of long values from method options. If option is not configured, NULL is returned.
      *
      * @param key Key identifying the option.
@@ -119,35 +162,8 @@ public class FacadeUtils {
     public static List<Long> getRequiredLongListOption(@NonNull String key,@NonNull String method,
                                                        @NonNull JsonNode options) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        ObjectReader reader = mapper.readerFor(new TypeReference<List<Long>>() {
-        });
-
-        List<Long> values = options.hasNonNull(key) ? reader.readValue(options.get(key)) : null;
-        if (values == null) {
-            log.error("Required option {} has not been found by method {}. " +
-                    "Check your configuration.", key, method);
-            throw new IllegalArgumentException("Required option has not been found.");
-        }
-
-        return values;
-    }
-
-    /**
-     * Get list of string values from method options. If option is not configured, NULL is returned.
-     *
-     * @param key Key identifying the option.
-     * @param method Which method demands for the option.
-     * @param options JSON containing the method options.
-     * @return Extracted option as list of long values.
-     * @throws IOException Invalid I/O value occurred during conversion from JSON to list of long values.
-     */
-    public static List<String> getRequiredStringListOption(@NonNull String key,@NonNull String method,
-                                                       @NonNull JsonNode options) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectReader reader = mapper.readerFor(new TypeReference<List<String>>() {
-        });
-
-        List<String> values = options.hasNonNull(key) ? reader.readValue(options.get(key)) : null;
+        List<Long> values =
+                options.hasNonNull(key) ? Arrays.asList(mapper.treeToValue(options.get(key), Long[].class)) : null;
         if (values == null) {
             log.error("Required option {} has not been found by method {}. " +
                     "Check your configuration.", key, method);
@@ -185,6 +201,33 @@ public class FacadeUtils {
 
         log.warn("No attributes found. Returning empty map.");
         return attributes;
+    }
+
+    /**
+     * Return map where internal Perun names are mapped to request attribute names.
+     * @param key String for mapper option in config file.
+     * @param method Which method demands for the option.
+     * @param options JSON containing method options.
+     * @return map where key is the external attribute name and value is internal attribute name in Perun.
+     */
+    public static Map<String, String> externalToInternalAttributeMapper(@NonNull String key, @NonNull String method,
+                                                                        @NonNull JsonNode options) {
+        Map<String, String> mapper = new HashMap<>();
+        JsonNode mapperOptions = options.hasNonNull(key) ? options.get(key) : null;
+
+        if (mapperOptions == null) {
+            log.error("Required option {} has not been found by method {}. " +
+                    "Check your configuration.", key, method);
+            throw new IllegalArgumentException("Required option has not been found.");
+        }
+
+        Iterator<String> it = mapperOptions.fieldNames();
+        while (it.hasNext()) {
+            String fieldName = it.next();
+            mapper.put(fieldName, mapperOptions.get(fieldName).asText());
+        }
+
+        return mapper;
     }
 
 }

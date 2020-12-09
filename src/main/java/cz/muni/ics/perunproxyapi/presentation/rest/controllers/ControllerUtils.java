@@ -1,13 +1,19 @@
 package cz.muni.ics.perunproxyapi.presentation.rest.controllers;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.InvalidRequestParameterException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import static cz.muni.ics.perunproxyapi.presentation.rest.controllers.ProxyUserProtectedController.ATTRIBUTES;
 
 @Slf4j
 public class ControllerUtils {
@@ -129,6 +135,18 @@ public class ControllerUtils {
     public static Long extractRequiredLong(JsonNode parent, String fieldName) throws InvalidRequestParameterException {
         JsonNode container = ControllerUtils.getRequiredJson(parent, fieldName);
         return ControllerUtils.extractLong(container);
+    }
+
+    public static Map<String, JsonNode> getMapOfJsonAttributes(JsonNode body) {
+        ObjectNode jsonAttributes = (ObjectNode) body.get(ATTRIBUTES);
+        Map<String, JsonNode> attributes = new HashMap<>();
+        Iterator<String> it = jsonAttributes.fieldNames();
+        while (it.hasNext()) {
+            String fieldName = it.next();
+            attributes.put(fieldName, jsonAttributes.get(fieldName));
+        }
+
+        return attributes;
     }
 
 }

@@ -6,6 +6,8 @@ import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.Affiliation;
 import cz.muni.ics.perunproxyapi.persistence.models.Facility;
+import cz.muni.ics.perunproxyapi.persistence.models.Candidate;
+import cz.muni.ics.perunproxyapi.persistence.models.ExtSource;
 import cz.muni.ics.perunproxyapi.persistence.models.Member;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttribute;
 import cz.muni.ics.perunproxyapi.persistence.models.UserExtSource;
@@ -147,4 +149,40 @@ public interface FullAdapter extends DataAdapter {
      * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
      */
     List<Facility> searchFacilitiesByAttributeValue(String perunProxyIdentifierAttr, String proxyIdentifier) throws PerunUnknownException, PerunConnectionException;
+    /**
+     * Returns an external source by its name.
+     *
+     * @param extSourceName Name of the ExtSource
+     * @return ExtSource object
+     */
+    ExtSource getExtSourceByName(@NonNull String extSourceName) throws PerunUnknownException, PerunConnectionException;
+
+    /**
+     * Creates an external source.
+     *
+     * @param extSourceName Name of the ExtSource
+     * @param extSourceType Type of the ExtSource
+     * @return Created ExtSource object
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    ExtSource createExtSource(@NonNull String extSourceName, @NonNull String extSourceType) throws PerunUnknownException, PerunConnectionException;
+
+    /**
+     * Creates a new member in VO from candidate.
+     *
+     * @param voId VO ID
+     * @param candidate Candidate object
+     * @return Created member object
+     */
+    Member createMember(Long voId, Candidate candidate) throws PerunUnknownException, PerunConnectionException;
+
+    /**
+     * Validate all attributes for member and set member's status to VALID.
+     *
+     * @param memberId Member id
+     * @return Member with original status
+     */
+    Member validateMember(Long memberId) throws PerunUnknownException, PerunConnectionException;
+
 }

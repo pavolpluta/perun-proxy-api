@@ -10,6 +10,7 @@
     default_fields:
       - "urn:attrname:attribute1"
       - "urn:attrname:attribute2"
+
 - methodName: "update_user_identity_attributes"
   configuration:
     attrMapper:
@@ -17,3 +18,22 @@
         externalNames: ["name1", "name2"]
         appendOnly: false
         useForSearch: false
+
+- methodName: "create_proxy_user"
+  configuration:
+    adapter: "RPC"
+    vo_id: 1
+    # ATTRIBUTES THAT MUST BE PRESENT IN THE REQUEST BODY, PART ATTRIBUTES
+    required_attributes: ["givenName", "eduPersonPrincipalName", "eduPersonScopedAffiliation"]
+    # ATTRIBUTES THAT WILL BE USED FOR LOGIN, FIRST NONEMPTY FROM LIST IS USED (i.e. in case that EPTID is empty in request body, userId is used)
+    login_attributes: ["eduPersonTargetedId", "userId"]
+    # MAPPING OF INTERNAL PERUN IDENTIFIERS TO EXTERNAL NAMES
+    attr_mapper:
+      eduPersonPrincipalName: "urn:perun:ues:attribute-def:def:eppn"
+      sn: "urn:perun:ues:attribute-def:def:sn"
+      eduPersonTargetedId: "urn:perun:ues:attribute-def:def:eptid"
+      eduPersonScopedAffiliation: "urn:perun:ues:attribute-def:def:affiliation"
+    candidate_mapper: # MAPPING OF CANDIDATE PROPERTY NAME TO EXTERNAL NAME
+      firstName: "givenName"
+      middleName: "middleName"
+      lastName: "sn"

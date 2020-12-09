@@ -2,7 +2,6 @@ package cz.muni.ics.perunproxyapi.presentation.rest.controllers;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import cz.muni.ics.perunproxyapi.application.facade.ProxyuserFacade;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.EntityNotFoundException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.InvalidRequestParameterException;
@@ -11,7 +10,9 @@ import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.presentation.DTOModels.UserDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,8 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Iterator;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -50,6 +50,7 @@ public class ProxyUserProtectedController {
     public static final String USER_ID = "userId";
     public static final String ATTRIBUTES = "attributes";
     public static final String FACILITY_ID = "facilityId";
+    public static final String EXT_SOURCE_IDENTIFIER = "extSourceIdentifier";
 
     private final ProxyuserFacade facade;
 
@@ -405,13 +406,8 @@ public class ProxyUserProtectedController {
             throw new InvalidRequestParameterException("identityId cannot be empty");
         }
         String decodedIdentityIdentifier = ControllerUtils.decodeUrlSafeBase64(identityId);
-        ObjectNode jsonAttributes = (ObjectNode) body.get(ATTRIBUTES);
-        Map<String, JsonNode> attributes = new HashMap<>();
-        Iterator<String> it = jsonAttributes.fieldNames();
-        while (it.hasNext()) {
-            String fieldName = it.next();
-            attributes.put(fieldName, jsonAttributes.get(fieldName));
-        }
+        Map<String,JsonNode> attributes = ControllerUtils.getMapOfJsonAttributes(body);
+
         return facade.updateUserIdentityAttributes(login, decodedIdentityIdentifier, attributes);
     }
 
@@ -465,6 +461,51 @@ public class ProxyUserProtectedController {
             throw new InvalidRequestParameterException("Users login cannot be empty");
         }
         return facade.ga4ghByLogin(login);
+    }
+
+    /**
+     * Create new member in the VO.
+     *
+     * EXAMPLE CURL:
+     * curl --request POST \
+     *   --url http://localhost:8081/proxyapi/auth/proxy-user \
+     *   --header 'Authorization: Basic auth' \
+     *   --header 'Content-Type: application/json' \
+     *   --data '{
+     *     "attributes": {
+     *       "givenName": "John",
+     *       "sn": "Doe",
+     *       "eduPersonPrincipalName": "jdd@edu.com",
+     *       "eduPersonTargetedId": "12345jd@edu.com",
+     *       "eduPersonScopedAffiliation": "eduPersonScopedAffiliation"
+     *     },
+     *     "extSourceIdentifier": "https://login.somewhere5.org"
+     *   }'
+     *
+     * @param body Request body. Example above in the CURL request.
+     * @return HTTP Status 201 if the member was successfully created, otherwise 404.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     * @throws IOException Invalid I/O value occurred during conversion from JSON to list.
+     * @throws InvalidRequestParameterException Invalid parameter given in the request body.
+     */
+    @ResponseBody
+    @PostMapping(value = "", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> create(@RequestBody JsonNode body)
+            throws PerunUnknownException, PerunConnectionException, InvalidRequestParameterException, IOException
+    {
+        if (body == null || !body.hasNonNull(ATTRIBUTES)) {
+            throw new InvalidRequestParameterException("Request body does not contain attributes.");
+        }
+
+        String extSourceId = ControllerUtils.extractRequiredString(body, EXT_SOURCE_IDENTIFIER);
+        Map<String,JsonNode> attributes = ControllerUtils.getMapOfJsonAttributes(body);
+
+        if (facade.create(extSourceId, attributes)) {
+            return new ResponseEntity<>(HttpStatus.CREATED);
+        }
+
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
 }
