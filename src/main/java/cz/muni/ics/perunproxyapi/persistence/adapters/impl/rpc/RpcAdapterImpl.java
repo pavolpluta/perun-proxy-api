@@ -670,6 +670,17 @@ public class RpcAdapterImpl implements FullAdapter {
                 .collect(Collectors.toSet());
     }
 
+    public List<Facility> searchFacilitiesByAttributeValue(String perunProxyIdentifierAttr, String proxyIdentifier) throws PerunUnknownException, PerunConnectionException {
+        Map<String, String> param = new HashMap<>();
+        param.put(perunProxyIdentifierAttr, proxyIdentifier);
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("attributesWithSearchingValues", param);
+
+        JsonNode perunResponse = connectorRpc.post(SEARCHER, "getFacilities", params);
+        return RpcMapper.mapFacilities(perunResponse);
+    }
+
     // private methods
 
     private Set<String> getFacilityCapabilities(Long facilityId, @NonNull String capabilitiesAttrName)

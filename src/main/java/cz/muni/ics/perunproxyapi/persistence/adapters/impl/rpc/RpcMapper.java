@@ -415,6 +415,34 @@ public class RpcMapper {
     }
 
     /**
+     * Maps JsonNode to PerunAttribute model.
+     *
+     * @param json PerunAttribute in JSON format from Perun to be mapped.
+     * @return Mapped PerunAttribute object.
+     */
+    public static PerunAttribute mapAttributeWithUnrequiredValue(@NonNull JsonNode json) {
+        if (json.isNull()) {
+            return null;
+        }
+
+        Long id = getRequiredFieldAsLong(json, ID);
+        String friendlyName = getRequiredFieldAsString(json, FRIENDLY_NAME);
+        String namespace = getRequiredFieldAsString(json, NAMESPACE);
+        String description = getRequiredFieldAsString(json, DESCRIPTION);
+        String type = getRequiredFieldAsString(json, TYPE);
+        String displayName = getRequiredFieldAsString(json, DISPLAY_NAME);
+        boolean writable = getRequiredFieldAsBoolean(json, WRITABLE);
+        boolean unique = getRequiredFieldAsBoolean(json, UNIQUE);
+        String entity = getRequiredFieldAsString(json, ENTITY);
+        String baseFriendlyName = getRequiredFieldAsString(json, BASE_FRIENDLY_NAME);
+        String friendlyNameParameter = getRequiredFieldAsString(json, FRIENDLY_NAME_PARAMETER);
+        JsonNode value = getUnrequiredFieldAsJsonNode(json, VALUE);
+
+        return new PerunAttribute(id, friendlyName, namespace, description, type, displayName,
+                writable, unique, entity, baseFriendlyName, friendlyNameParameter, value);
+    }
+
+    /**
      * Maps JsonNode to Map<String, PerunAttribute>.
      * Keys are the internal identifiers of the attributes.
      * Values are attributes corresponding to the names.
@@ -514,6 +542,10 @@ public class RpcMapper {
         if (!json.hasNonNull(name)) {
             throw new MissingFieldException();
         }
+        return json.get(name);
+    }
+
+    private static JsonNode getUnrequiredFieldAsJsonNode(JsonNode json, String name) {
         return json.get(name);
     }
 

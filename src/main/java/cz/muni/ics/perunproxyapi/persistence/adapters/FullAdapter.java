@@ -5,6 +5,7 @@ import cz.muni.ics.perunproxyapi.persistence.enums.MemberStatus;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.Affiliation;
+import cz.muni.ics.perunproxyapi.persistence.models.Facility;
 import cz.muni.ics.perunproxyapi.persistence.models.Member;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttribute;
 import cz.muni.ics.perunproxyapi.persistence.models.UserExtSource;
@@ -137,4 +138,13 @@ public interface FullAdapter extends DataAdapter {
      */
     List<Affiliation> getGroupAffiliations(Long userId, String groupAffiliationsAttr) throws PerunUnknownException, PerunConnectionException;
 
+    /**
+     *
+     * @param perunProxyIdentifierAttr String attribute identifier of the perunProxyIdentifier attribute
+     * @param proxyIdentifier String proxy identifier (value of perunProxyIdentifier attribute)
+     * @return List of all facilities from given proxy
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    List<Facility> searchFacilitiesByAttributeValue(String perunProxyIdentifierAttr, String proxyIdentifier) throws PerunUnknownException, PerunConnectionException;
 }
