@@ -45,6 +45,9 @@ public class GuiServiceImpl implements GuiService {
     private static final String STAGING = "STAGING";
     private static final String PRODUCTION = "PRODUCTION";
 
+    public static final String SERVICES = "services";
+    public static final String STATISTICS = "statistics";
+
     @Override
     public ListOfServicesDAO getListOfSps(@NonNull ListOfServicesGuiParams params)
             throws PerunUnknownException, PerunConnectionException
@@ -69,8 +72,8 @@ public class GuiServiceImpl implements GuiService {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
         Map<String, Integer> statistics = createCounterData(sac.getSamlCounter(), sac.getOidcCounter());
 
-        json.set("services", getServicesJsonArray(sac.getServices(), params.getJsonAttributes()));
-        json.set("statistics", new ObjectMapper().convertValue(statistics, ObjectNode.class));
+        json.set(SERVICES, getServicesJsonArray(sac.getServices(), params.getJsonAttributes()));
+        json.set(STATISTICS, new ObjectMapper().convertValue(statistics, ObjectNode.class));
 
         return json;
     }

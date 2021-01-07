@@ -2,9 +2,11 @@ package cz.muni.ics.perunproxyapi.application.facade;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import cz.muni.ics.perunproxyapi.persistence.exceptions.EntityNotFoundException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.listOfServices.ListOfServicesDAO;
+import lombok.NonNull;
 
 /**
  * Facade for GUI related things.
@@ -32,5 +34,16 @@ public interface GuiFacade {
      * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
      */
     JsonNode getListOfSpsInJson() throws JsonProcessingException, PerunUnknownException, PerunConnectionException;
+
+    /**
+     * Get environment for RP
+     * @param rpIdentifier Rp identifier.
+     * @return Environment
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     * @throws EntityNotFoundException Throw when no RP has been found for given identifier.
+     */
+    String getRpEnvironmentValue(@NonNull String rpIdentifier)
+            throws PerunUnknownException, PerunConnectionException, EntityNotFoundException;
 
 }
