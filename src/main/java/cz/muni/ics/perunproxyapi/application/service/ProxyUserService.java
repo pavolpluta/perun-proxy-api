@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import cz.muni.ics.perunproxyapi.persistence.adapters.DataAdapter;
 import cz.muni.ics.perunproxyapi.persistence.adapters.FullAdapter;
 import cz.muni.ics.perunproxyapi.persistence.enums.Entity;
+import cz.muni.ics.perunproxyapi.persistence.exceptions.InvalidRequestParameterException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue;
@@ -11,6 +12,7 @@ import cz.muni.ics.perunproxyapi.persistence.models.UpdateAttributeMappingEntry;
 import cz.muni.ics.perunproxyapi.persistence.models.User;
 import lombok.NonNull;
 import org.apache.coyote.Adapter;
+import org.apache.commons.collections4.BidiMap;
 
 import javax.management.InvalidAttributeValueException;
 import java.util.List;
@@ -159,5 +161,29 @@ public interface ProxyUserService {
                                          @NonNull Map<String, String> externalToInternalMapping,
                                          @NonNull List<String> attrsToSearchBy)
             throws PerunUnknownException, PerunConnectionException;
+
+    /**
+     * Create proxy user by creating a member in the VO.
+     *
+     * @param rpcAdapter RPC adapter
+     * @param extSourceIdentifier ExtSource identifier (name)
+     * @param voId ID of VO where member is being created. Must exist.
+     * @param login Login which will be used for UserExtSource.
+     * @param userAttributes Attributes from request body.
+     * @param perunAttributesMapper Map where key is the external attr name and value internal, Perun attr identifier.
+     * @param candidateAttributesMapper Map where key is the candidate attr name used in Perun and value is external attr name.
+     * @return TRUE if member was created, otherwise FALSE>
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     * @throws InvalidRequestParameterException Invalid parameter given in the request body.
+     */
+    boolean create(@NonNull FullAdapter rpcAdapter,
+                   @NonNull String extSourceIdentifier,
+                   @NonNull Long voId,
+                   @NonNull String login,
+                   @NonNull Map<String, JsonNode> userAttributes,
+                   @NonNull Map<String, String> perunAttributesMapper,
+                   @NonNull BidiMap<String, String> candidateAttributesMapper)
+            throws PerunUnknownException, PerunConnectionException, InvalidRequestParameterException;
 
 }

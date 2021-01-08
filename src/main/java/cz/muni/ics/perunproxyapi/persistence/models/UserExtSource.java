@@ -37,6 +37,11 @@ public class UserExtSource {
         this.setLastAccess(lastAccess);
     }
 
+    public UserExtSource(@NonNull ExtSource extSource, @NonNull String login) {
+        this.extSource = extSource;
+        this.login = login;
+    }
+
     public void setLogin(@NonNull String login) {
         if (!StringUtils.hasText(login)) {
             throw new IllegalArgumentException("login cannot be empty");

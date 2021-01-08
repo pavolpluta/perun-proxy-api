@@ -8,9 +8,13 @@ import cz.muni.ics.perunproxyapi.persistence.adapters.DataAdapter;
 import cz.muni.ics.perunproxyapi.persistence.adapters.FullAdapter;
 import cz.muni.ics.perunproxyapi.persistence.enums.Entity;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.InternalErrorException;
+import cz.muni.ics.perunproxyapi.persistence.exceptions.InvalidRequestParameterException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
+import cz.muni.ics.perunproxyapi.persistence.models.Candidate;
+import cz.muni.ics.perunproxyapi.persistence.models.ExtSource;
 import cz.muni.ics.perunproxyapi.persistence.models.Group;
+import cz.muni.ics.perunproxyapi.persistence.models.Member;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttribute;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValueAwareModel;
@@ -20,6 +24,7 @@ import cz.muni.ics.perunproxyapi.persistence.models.UserExtSource;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.Adapter;
+import org.apache.commons.collections4.BidiMap;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -34,14 +39,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.stream.Collectors;
+
+import static cz.muni.ics.perunproxyapi.application.service.ServiceUtils.ATTR_NS_UES;
+import static cz.muni.ics.perunproxyapi.application.service.ServiceUtils.UES_VALUES_SEPARATOR;
 
 @Component
 @Slf4j
 public class ProxyUserServiceImpl implements ProxyUserService {
-
-    public static final String UES_VALUES_SEPARATOR = ";";
 
     @Override
     public User findByExtLogins(@NonNull DataAdapter preferredAdapter, @NonNull String idpIdentifier,
@@ -175,6 +180,73 @@ public class ProxyUserServiceImpl implements ProxyUserService {
         }
         boolean lastAccessUpdated = adapter.updateUserExtSourceLastAccess(ues);
         return attributesUpdated && lastAccessUpdated;
+    }
+
+    @Override
+    public boolean create(@NonNull FullAdapter rpcAdapter,
+                          @NonNull String extSourceIdentifier,
+                          @NonNull Long voId,
+                          @NonNull String login,
+                          @NonNull Map<String, JsonNode> userAttributes,
+                          @NonNull Map<String, String> perunAttributesMapper,
+                          @NonNull BidiMap<String, String> candidateAttributesMapper)
+            throws PerunUnknownException, PerunConnectionException, InvalidRequestParameterException
+    {
+        User user = rpcAdapter.getPerunUser(extSourceIdentifier, Collections.singletonList(login), null);
+        if (user != null) {
+            throw new InvalidRequestParameterException("User with parameters provided in the request already exists.");
+        }
+
+        if (rpcAdapter.getVoById(voId) == null) {
+            throw new InvalidRequestParameterException(String.format("Vo with id '%d' does not exist.", voId));
+        }
+
+        Candidate candidate = ServiceUtils.createCandidateWithoutUserExtSource(
+                userAttributes, perunAttributesMapper, candidateAttributesMapper);
+
+        ExtSource extSource = new ExtSource(extSourceIdentifier, "cz.metacentrum.perun.core.impl.ExtSourceIdp");
+        UserExtSource userExtSource = new UserExtSource(extSource, login);
+        candidate.setUserExtSource(userExtSource);
+
+        Member member = rpcAdapter.createMember(voId, candidate);
+        if (member == null || member.getId() == null) {
+            throw new InternalErrorException("Could not proceed with creating user");
+        }
+
+        rpcAdapter.validateMember(member.getId());
+        user = rpcAdapter.getPerunUser(extSourceIdentifier, Collections.singletonList(login), null);
+        if (user != null) {
+            UserExtSource ues = rpcAdapter.getUserExtSource(extSourceIdentifier, login);
+            try {
+                updateUesAttributes(rpcAdapter, ues, userAttributes, perunAttributesMapper);
+            } catch (Exception e) {
+                throw new InternalErrorException("Could not set UES attributes");
+            }
+        }
+        return true;
+    }
+
+    private void updateUesAttributes(FullAdapter adapter, UserExtSource ues, Map<String, JsonNode> attrValues,
+                                     final Map<String, String> namesMap)
+            throws PerunUnknownException, PerunConnectionException
+    {
+        if (ues != null) {
+            Map<String, JsonNode> uesAttrs = new HashMap<>();
+            attrValues.forEach((name, value) -> {
+                if (namesMap.containsKey(name)
+                        && StringUtils.hasText(namesMap.get(name))
+                        && namesMap.get(name).startsWith(ATTR_NS_UES)) {
+                    uesAttrs.put(namesMap.get(name), ServiceUtils.serializeValueForUes(value));
+                }
+            });
+            Map<String, PerunAttribute> actual = adapter.getAttributes(Entity.USER_EXT_SOURCE, ues.getId(),
+                    new ArrayList<>(uesAttrs.keySet()));
+            uesAttrs.forEach((name, value) -> {
+                PerunAttribute a = actual.get(name);
+                a.setValue(a.getType(), value);
+            });
+            adapter.setAttributes(Entity.USER_EXT_SOURCE, ues.getId(), new ArrayList<>(actual.values()));
+        }
     }
 
     private UserExtSource getUserExtSourceUsingIdentityId(@NonNull FullAdapter adapter, @NonNull List<String> uesAttrs,
@@ -328,41 +400,23 @@ public class ProxyUserServiceImpl implements ProxyUserService {
                 if (internalToAttrMappingEntries.get(attrIdentifier).isAppendOnly()) {
                     JsonNode oldValue = currentAttribute.getValue();
                     if (PerunAttributeValueAwareModel.isNullValue(oldValue)) {
-                        newValueToSet = this.serializeValueForUes(newValue);
+                        newValueToSet = ServiceUtils.serializeValueForUes(newValue);
                     } else {
                         Set<String> parts = new HashSet<>();
                         if (StringUtils.hasText(oldValue.textValue())) {
                             parts.addAll(this.getPartsFromUesStringVal(oldValue));
                         }
-                        parts.addAll(this.getPartsFromUesStringVal(this.serializeValueForUes(newValue)));
+                        parts.addAll(this.getPartsFromUesStringVal(ServiceUtils.serializeValueForUes(newValue)));
                         newValueToSet = JsonNodeFactory.instance.textNode(String.join(UES_VALUES_SEPARATOR, parts));
                     }
                 } else {
-                    newValueToSet = this.serializeValueForUes(newValue);
+                    newValueToSet = ServiceUtils.serializeValueForUes(newValue);
                 }
             }
             currentAttribute.setValue(currentAttribute.getType(), newValueToSet);
             attributesToUpdateList.add(currentAttribute);
         }
         return attributesToUpdateList;
-    }
-
-    private JsonNode serializeValueForUes(JsonNode newValue) {
-        if (newValue == null || newValue.isNull()) {
-            return JsonNodeFactory.instance.nullNode();
-        } else if (newValue.isArray()) {
-            if (newValue.size() == 0) {
-                return JsonNodeFactory.instance.nullNode();
-            } else {
-                StringJoiner val = new StringJoiner(UES_VALUES_SEPARATOR);
-                for (JsonNode node: newValue) {
-                    val.add(node.textValue());
-                }
-                return JsonNodeFactory.instance.textNode(val.toString());
-            }
-        }
-
-        return newValue;
     }
 
     private Collection<String> getPartsFromUesStringVal(JsonNode value) {

@@ -29,6 +29,17 @@ components:
         "urn:attribute:name:2": "value2"
         "urn:attribute:name:3": ["value1", "array2"]
         "urn:attribute:name:4": true
+    UserAttributes:
+      type: object
+      additionalProperties:
+        oneOf:
+          - type: string
+            example: "value"
+      example:
+        "givenName": "John"
+        "lastName": "Doe"
+        "nickName": "Doe123"
+        "userId": "someRandomStringServiceAsUserId"
     PutAttributes:
       type: object
       properties:
@@ -79,6 +90,14 @@ components:
           $ref: '#/components/schemas/Fields'
       required:
         - userId
+    CreateProxyUserRequestBody:
+      type: object
+      properties:
+        extSourceIdentifier:
+          type: string
+          example: 'https://login.somewhere.org'
+        attributes:
+          $ref: '#/components/schemas/UserAttributes'
   responses:
     400BadRequest:
       description: Bad Request
@@ -646,7 +665,7 @@ paths:
           description: User's login
           example: '1a2b3c@example.com'
           schema:
-            type: String
+            type: string
       security:
         - BasicAuth: [ ]
       responses:
@@ -656,6 +675,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProxyUser'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401NotAuthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '405':
+          $ref: '#/components/responses/405NotAllowed'
+        '500':
+          $ref: '#/components/responses/500InternalError'
+        '503':
+          $ref: '#/components/responses/503TemporaryUnavailable'
+  /auth/proxy-user:
+    post:
+      summary: Create new user.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProxyUserRequestBody'
+      security:
+        - BasicAuth: [ ]
+      responses:
+        '200':
+          description: OK
         '400':
           $ref: '#/components/responses/400BadRequest'
         '401':

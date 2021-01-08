@@ -12,6 +12,7 @@ import cz.muni.ics.perunproxyapi.persistence.adapters.DataAdapter;
 import cz.muni.ics.perunproxyapi.persistence.adapters.FullAdapter;
 import cz.muni.ics.perunproxyapi.persistence.adapters.impl.AdaptersContainer;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.EntityNotFoundException;
+import cz.muni.ics.perunproxyapi.persistence.exceptions.InvalidRequestParameterException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.UpdateAttributeMappingEntry;
@@ -19,11 +20,14 @@ import cz.muni.ics.perunproxyapi.persistence.models.User;
 import cz.muni.ics.perunproxyapi.presentation.DTOModels.UserDTO;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.management.InvalidAttributeValueException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,7 +50,13 @@ public class ProxyuserFacadeImpl implements ProxyuserFacade {
     public static final String AUTHORITY = "authority";
     public static final String FORWARDED_ENTITLEMENTS = "forwarded_entitlements";
     public static final String DEFAULT_FIELDS = "default_fields";
-    public static final String ATTR_MAPPER = "attrMapper";
+    public static final String ATTR_MAPPER = "attr_mapper";
+
+    public static final String CREATE_PROXY_USER = "create_proxy_user";
+    public static final String VO_ID = "vo_id";
+    public static final String REQUIRED_ATTRIBUTES = "required_attributes";
+    public static final String LOGIN_ATTRIBUTES = "login_attributes";
+    public static final String CANDIDATE_MAPPER = "candidate_mapper";
 
     private final Map<String, JsonNode> methodConfigurations;
     private final AdaptersContainer adaptersContainer;
@@ -206,6 +216,43 @@ public class ProxyuserFacadeImpl implements ProxyuserFacade {
             throws PerunUnknownException, PerunConnectionException, EntityNotFoundException
     {
         return ga4gh(null, login);
+    }
+
+    @Override
+    public boolean create(@NonNull String extSourceIdentifier, @NonNull Map<String, JsonNode> requestAttributes)
+            throws IOException, PerunUnknownException, PerunConnectionException, InvalidRequestParameterException
+    {
+        JsonNode options = FacadeUtils.getOptions(CREATE_PROXY_USER, methodConfigurations);
+        Long voId = FacadeUtils.getRequiredLongOption(VO_ID, CREATE_PROXY_USER, options);
+
+        FullAdapter adapter = adaptersContainer.getRpcAdapter();
+        List<String> requiredAttrs = FacadeUtils.getRequiredStringListOption(
+                REQUIRED_ATTRIBUTES, CREATE_PROXY_USER, options);
+        List<String> loginAttrs = FacadeUtils.getRequiredStringListOption(
+                LOGIN_ATTRIBUTES, CREATE_PROXY_USER, options);
+        Map<String, String> perunAttrsMapper = FacadeUtils.externalToInternalAttributeMapper(
+                ATTR_MAPPER, CREATE_PROXY_USER, options);
+        BidiMap<String, String> candidateAttrsMapper = new DualHashBidiMap<>(
+                FacadeUtils.externalToInternalAttributeMapper(CANDIDATE_MAPPER, CREATE_PROXY_USER, options));
+        if (!requestAttributes.keySet().containsAll(requiredAttrs)) {
+            throw new InvalidRequestParameterException("Not all required attributes have been provided.");
+        }
+
+        String login = null;
+        for (String loginAttr: loginAttrs) {
+            if (requestAttributes.containsKey(loginAttr)
+                    && StringUtils.hasText(requestAttributes.get(loginAttr).textValue())) {
+                login = requestAttributes.get(loginAttr).textValue();
+                break;
+            }
+        }
+
+        if (login == null) {
+            throw new InvalidRequestParameterException("No attributes for login have been sent in a request body.");
+        }
+
+        return proxyUserService.create(adapter, extSourceIdentifier, voId, login, requestAttributes,
+                perunAttrsMapper, candidateAttrsMapper);
     }
 
     private JsonNode ga4gh(Long perunUserId, String userLogin) throws PerunConnectionException, PerunUnknownException,
