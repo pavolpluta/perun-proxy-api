@@ -12,6 +12,7 @@ import cz.muni.ics.perunproxyapi.persistence.models.Group;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -40,6 +41,7 @@ public class RelyingPartyServiceImpl implements RelyingPartyService {
 
     private final DataSource proxyApiStats;
 
+    @Autowired
     public RelyingPartyServiceImpl(@Qualifier("proxyApiStats") DataSource proxyApiStats) {
         this.proxyApiStats = proxyApiStats;
     }
