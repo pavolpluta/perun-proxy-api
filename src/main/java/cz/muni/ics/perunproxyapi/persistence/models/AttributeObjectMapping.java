@@ -44,7 +44,7 @@ public class AttributeObjectMapping {
     }
 
     public void setIdentifier(@NonNull String identifier) {
-        if (StringUtils.isEmpty(identifier)) {
+        if (!StringUtils.hasText(identifier)) {
             throw new IllegalArgumentException("identifier cannot be null nor empty");
         }
 
@@ -52,7 +52,7 @@ public class AttributeObjectMapping {
     }
 
     public void setRpcName(@NonNull String rpcName) {
-        if (StringUtils.isEmpty(rpcName)) {
+        if (!StringUtils.hasText(rpcName)) {
             throw new IllegalArgumentException("rpcName cannot be null nor empty");
         }
 
@@ -60,7 +60,7 @@ public class AttributeObjectMapping {
     }
 
     public void setLdapName(String ldapName) {
-        if (StringUtils.isEmpty(ldapName)) {
+        if (!StringUtils.hasText(ldapName)) {
             this.ldapName = null;
         } else {
             this.ldapName = ldapName;
