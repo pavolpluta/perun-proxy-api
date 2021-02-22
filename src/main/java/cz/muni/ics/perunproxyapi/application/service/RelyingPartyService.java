@@ -111,4 +111,19 @@ public interface RelyingPartyService {
                                  @NonNull String rpEnvAttr)
             throws PerunUnknownException, PerunConnectionException, EntityNotFoundException;
 
+    /**
+     * Log statistics about login into corresponding table
+     * @param userId User ID
+     * @param idpEntityId ID of the IDP entity
+     * @param idpName Name of the IDP
+     * @param rpIdentifier RP identifier
+     * @param rpName Name of the Rp
+     * @param statisticsTableName Name of the table to store data to
+     * @param idpMapTable IDP map table
+     * @param rpMapTable RP map table
+     * @return TRUE if data were inserted into the table, otherwise FALSE.
+     */
+    boolean logStatistics(Long userId, String idpEntityId, String idpName, String rpIdentifier, String rpName,
+                          String statisticsTableName, String idpMapTable, String rpMapTable);
+
 }

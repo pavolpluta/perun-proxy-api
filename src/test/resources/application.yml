@@ -32,6 +32,12 @@ connector:
     connection_pool_size: 20
     base_dn: "dc=perun-dev,dc=cesnet,dc=cz"
     use_tls: false
+  stats:
+    datasource:
+      url: "jdbc:url"
+      driver-class-name: "org.example.driver"
+      username: "dbuser"
+      password: "dbpass"
 
 attributes:
   paths:
@@ -57,3 +63,6 @@ ga4gh:
 
 localization:
   path: "${PWD}/src/test/resources/configs/localization/"
+
+statistics:
+  table_name: "table_name_example"

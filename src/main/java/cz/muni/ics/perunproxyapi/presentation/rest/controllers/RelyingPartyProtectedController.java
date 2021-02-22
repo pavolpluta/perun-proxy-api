@@ -11,13 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -42,6 +36,9 @@ public class RelyingPartyProtectedController {
 
     public static final String RP_IDENTIFIER = "rp-identifier";
     public static final String LOGIN = "login";
+    private static final String IDP_ENTITY_ID = "idpEntityId";
+    private static final String RP_NAME = "rpName";
+    private static final String IDP_NAME = "idpName";
 
     private final RelyingPartyFacade facade;
 
@@ -163,6 +160,43 @@ public class RelyingPartyProtectedController {
         }
         String decodedRpIdentifier = ControllerUtils.decodeUrlSafeBase64(rpIdentifier);
         return facade.getRpEnvironmentValue(decodedRpIdentifier);
+    }
+
+    /**
+     * Log statistics about login into corresponding table
+     * @param body json body corresponding of required attributes:
+     *             - login
+     *             - rpIdentifier
+     *             - rpName
+     *             - idpEntityId
+     *             - idpName
+     * @return HTTP Status 200 if data was successfully logged into statistics table, otherwise 404.
+     * @throws InvalidRequestParameterException Thrown when passed request parameters do not meet criteria.
+     * @throws EntityNotFoundException Thrown when no user has been found.
+     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
+     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
+     */
+    @ResponseBody
+    @PutMapping(value = "/statistics", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> logStatistics(@RequestBody JsonNode body) throws InvalidRequestParameterException, EntityNotFoundException, PerunUnknownException, PerunConnectionException {
+        if (body == null) {
+            throw new InvalidRequestParameterException("Request body is empty.");
+        }
+
+        String login = ControllerUtils.extractRequiredString(body, LOGIN);
+        String rpIdentifier = ControllerUtils.extractRequiredString(body, RP_IDENTIFIER);
+        String rpName = ControllerUtils.extractRequiredString(body, RP_NAME);
+        String idpEntityId = ControllerUtils.extractRequiredString(body, IDP_ENTITY_ID);
+        String idpName = ControllerUtils.extractRequiredString(body, IDP_NAME);
+
+
+        boolean result = facade.logStatistics(login, rpIdentifier, rpName, idpEntityId, idpName);
+
+        if (result) {
+            return new ResponseEntity<>("Statistics successfully logged.", HttpStatus.OK);
+        }
+
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
 }

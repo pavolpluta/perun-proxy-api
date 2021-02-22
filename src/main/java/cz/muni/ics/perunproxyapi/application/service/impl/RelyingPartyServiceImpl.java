@@ -11,10 +11,15 @@ import cz.muni.ics.perunproxyapi.persistence.models.Facility;
 import cz.muni.ics.perunproxyapi.persistence.models.Group;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.yaml.snakeyaml.external.com.google.gdata.util.common.base.PercentEscaper;
 
+import javax.sql.DataSource;
+import java.sql.*;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,6 +28,7 @@ import java.util.stream.Collectors;
 import static cz.muni.ics.perunproxyapi.persistence.enums.Entity.FACILITY;
 
 @Component
+@Slf4j
 public class RelyingPartyServiceImpl implements RelyingPartyService {
 
     private static final PercentEscaper ESCAPER = new PercentEscaper("-_.!~*'()", false);
@@ -31,6 +37,12 @@ public class RelyingPartyServiceImpl implements RelyingPartyService {
     private static final String GROUP_ATTRIBUTES = "groupAttributes";
     private static final String DISPLAY_NAME = "displayName";
     private static final String GROUP = "group";
+
+    private final DataSource proxyApiStats;
+
+    public RelyingPartyServiceImpl(@Qualifier("proxyApiStats") DataSource proxyApiStats) {
+        this.proxyApiStats = proxyApiStats;
+    }
 
     @Override
     public Set<String> getEntitlements(@NonNull DataAdapter adapter, @NonNull Long facilityId,
@@ -176,6 +188,90 @@ public class RelyingPartyServiceImpl implements RelyingPartyService {
 
     private String addPrefixAndSuffix(String s, String prefix, String authority) {
         return prefix + s + '#' + authority;
+    }
+
+    @Override
+    public boolean logStatistics(Long userId, String idpEntityId, String idpName, String rpIdentifier, String rpName,
+                                 String statisticsTableName, String idpMapTable, String rpMapTable) {
+
+
+        LocalDate date = LocalDate.now();
+
+
+        String insertLoginQuery = "INSERT INTO " + statisticsTableName + "(day, idpId, spId, user, logins)" +
+                " VALUES(?, ?, ?, ?, '1') ON DUPLICATE KEY UPDATE logins = logins + 1";
+
+        try (Connection c = proxyApiStats.getConnection()) {
+            insertIdpMap(c, idpEntityId, idpName, idpMapTable);
+            insertRpMap(c, rpIdentifier, rpName, rpMapTable);
+            int idpId = extractIdpId(c, idpEntityId, idpMapTable);
+            int spId = extractSpId(c, rpIdentifier, rpMapTable);
+
+            try (PreparedStatement preparedStatement = c.prepareStatement(insertLoginQuery)) {
+                preparedStatement.setDate(1, Date.valueOf(date));
+                preparedStatement.setInt(2, idpId);
+                preparedStatement.setInt(3, spId);
+                preparedStatement.setString(4, String.valueOf(userId));
+                preparedStatement.execute();
+                log.trace("login entry stored ({}, {}, {}, {}, {})", idpEntityId, idpName,
+                        rpIdentifier, rpName, userId);
+            }
+        } catch (SQLException ex) {
+            log.warn("caught SQLException", ex);
+            return false;
+        }
+
+        return true;
+    }
+
+    private int extractSpId(Connection c, String rpIdentifier, String rpMapTable) throws SQLException {
+        String getSpIdQuery = "SELECT * FROM " + rpMapTable + " WHERE identifier= ?";
+
+        try (PreparedStatement preparedStatement = c.prepareStatement(getSpIdQuery)) {
+            preparedStatement.setString(1, rpIdentifier);
+            ResultSet rs = preparedStatement.executeQuery();
+            rs.first();
+            log.debug("RP ID obtained.");
+            return rs.getInt("spId");
+        }
+    }
+
+    private int extractIdpId(Connection c, String idpEntityId, String idpMapTable) throws SQLException {
+        String getIdPIdQuery = "SELECT * FROM " + idpMapTable + " WHERE identifier = ?";
+
+        try (PreparedStatement preparedStatement = c.prepareStatement(getIdPIdQuery)) {
+            preparedStatement.setString(1, idpEntityId);
+            ResultSet rs = preparedStatement.executeQuery();
+            rs.first();
+            log.debug("Idp ID obtained");
+            return rs.getInt("idpId");
+        }
+    }
+
+    private void insertRpMap(Connection c, String rpIdentifier, String rpName, String rpMapTable) throws SQLException {
+        String insertSpMapQuery = "INSERT INTO " + rpMapTable + "(identifier, name)" +
+                " VALUES (?, ?) ON DUPLICATE KEY UPDATE name = ?";
+
+        try (PreparedStatement preparedStatement = c.prepareStatement(insertSpMapQuery)) {
+            preparedStatement.setString(1, rpIdentifier);
+            preparedStatement.setString(2, rpName);
+            preparedStatement.setString(3, rpName);
+            preparedStatement.execute();
+            log.trace("RP map entry inserted");
+        }
+    }
+
+    private void insertIdpMap(Connection c, String idpEntityId, String idpName, String idpMapTable) throws SQLException {
+        String insertIdpMapQuery = "INSERT INTO " + idpMapTable + "(identifier, name)" +
+                " VALUES (?, ?) ON DUPLICATE KEY UPDATE name = ?";
+
+        try (PreparedStatement preparedStatement = c.prepareStatement(insertIdpMapQuery)) {
+            preparedStatement.setString(1, idpEntityId);
+            preparedStatement.setString(2, idpName);
+            preparedStatement.setString(3, idpName);
+            preparedStatement.execute();
+            log.trace("IdP map entry inserted");
+        }
     }
 
 }

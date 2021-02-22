@@ -22,6 +22,12 @@ connector:
     connection_pool_size: 20
     base_dn: "dc=perun,dc=cesnet,dc=cz"
     use_tls: true
+  stats:
+    datasource:
+      url: "jdbc:url"
+      driver-class-name: "org.example.driver"
+      username: "dbuser"
+      password: "dbpass"
 
 attributes:
   paths:
