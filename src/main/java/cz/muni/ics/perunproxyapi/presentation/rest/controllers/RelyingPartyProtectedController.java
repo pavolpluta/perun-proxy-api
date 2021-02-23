@@ -161,10 +161,25 @@ public class RelyingPartyProtectedController {
     }
 
     /**
-     * Log statistics about login into corresponding table
+     * <pre>
+     * Log statistics about login into corresponding tables
+     *
+     * EXAMPLE CURL:
+     *  curl --request PUT \
+     *   --url http://localhost:8080/proxyapi/auth/relying-party/statistics \
+     *   --header 'Authorization: Basic auth' \
+     *   --header 'Content-Type: application/json' \
+     *   --data '{
+     * 	    "login": "test_user_login",
+     * 	    "rp-identifier": "test_rpIdentifier",
+     * 	    "rpName": "test_rpName",
+     * 	    "idpEntityId": "test_idpEntityId",
+     * 	    "idpName": "test_IdpName"
+     *    }'
+     * </pre>
      * @param body json body corresponding of required attributes:
      *             - login
-     *             - rpIdentifier
+     *             - rp-identifier
      *             - rpName
      *             - idpEntityId
      *             - idpName
