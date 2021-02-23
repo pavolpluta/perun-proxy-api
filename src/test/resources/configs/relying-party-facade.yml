@@ -19,7 +19,6 @@
 
 - methodName: "log_statistics"
   configuration:
-    adapter: "RPC"
     statistics_table_name: "example_statistics_table"
     idp_map_table_name: "example_idp_map_table"
     rp_map_table_name: "example_rp_map_table"

@@ -14,8 +14,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static cz.muni.ics.perunproxyapi.presentation.rest.config.PathConstants.AUTH_PATH;
@@ -196,7 +194,7 @@ public class RelyingPartyProtectedController {
             return new ResponseEntity<>("Statistics successfully logged.", HttpStatus.OK);
         }
 
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 }

@@ -15,7 +15,7 @@ import javax.sql.DataSource;
 public class DBConnectors {
 
     @Bean(name = "proxyApiStats")
-    @ConfigurationProperties(prefix = "connector.stats.datasource")
+    @ConfigurationProperties(prefix = "database.stats.datasource")
     public DataSource statsDbDataSource() {
         return DataSourceBuilder.create().build();
     }

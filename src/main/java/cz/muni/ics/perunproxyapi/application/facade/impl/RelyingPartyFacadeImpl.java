@@ -181,7 +181,7 @@ public class RelyingPartyFacadeImpl implements RelyingPartyFacade {
 
         FullAdapter adapter = adaptersContainer.getRpcAdapter();
         User user = proxyUserService.getUserByLogin(adapter, login);
-        if (user == null || user.getPerunId() == null) {
+        if (user == null) {
             throw new EntityNotFoundException("No user has been found for given login");
         }
 

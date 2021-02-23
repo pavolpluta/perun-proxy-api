@@ -32,6 +32,8 @@ connector:
     connection_pool_size: 20
     base_dn: "dc=perun-dev,dc=cesnet,dc=cz"
     use_tls: false
+
+database:
   stats:
     datasource:
       url: "jdbc:url"
@@ -63,6 +65,3 @@ ga4gh:
 
 localization:
   path: "${PWD}/src/test/resources/configs/localization/"
-
-statistics:
-  table_name: "table_name_example"
