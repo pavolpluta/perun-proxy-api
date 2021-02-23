@@ -36,8 +36,8 @@ connector:
 database:
   stats:
     datasource:
-      url: "jdbc:url"
-      driver-class-name: "org.example.driver"
+      jdbcUrl: "jdbc:mysql://localhost:3306/STATS"
+      driverClassName: "com.mysql.cj.jdbc.Driver"
       username: "dbuser"
       password: "dbpass"
 

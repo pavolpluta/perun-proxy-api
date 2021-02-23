@@ -19,6 +19,6 @@
 
 - methodName: "log_statistics"
   configuration:
-    statistics_table_name: "example_statistics_table"
-    idp_map_table_name: "example_idp_map_table"
-    rp_map_table_name: "example_rp_map_table"
+    statistics_table_name: "statistics_per_user"
+    idp_map_table_name: "statistics_idp"
+    rp_map_table_name: "statistics_sp"

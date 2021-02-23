@@ -211,12 +211,12 @@ public class RelyingPartyServiceImpl implements RelyingPartyService {
             insertIdpMap(c, idpEntityId, idpName, idpMapTable);
             insertRpMap(c, rpIdentifier, rpName, rpMapTable);
             int idpId = extractIdpId(c, idpEntityId, idpMapTable);
-            int spId = extractSpId(c, rpIdentifier, rpMapTable);
+            int rpId = extractRpId(c, rpIdentifier, rpMapTable);
 
             try (PreparedStatement preparedStatement = c.prepareStatement(insertLoginQuery)) {
                 preparedStatement.setDate(1, Date.valueOf(date));
                 preparedStatement.setInt(2, idpId);
-                preparedStatement.setInt(3, spId);
+                preparedStatement.setInt(3, rpId);
                 preparedStatement.setString(4, String.valueOf(userId));
                 preparedStatement.execute();
                 log.trace("login entry stored ({}, {}, {}, {}, {})", idpEntityId, idpName,
@@ -230,10 +230,12 @@ public class RelyingPartyServiceImpl implements RelyingPartyService {
         return true;
     }
 
-    private int extractSpId(Connection c, String rpIdentifier, String rpMapTable) throws SQLException {
-        String getSpIdQuery = "SELECT * FROM " + rpMapTable + " WHERE identifier= ?";
+    private int extractRpId(Connection c, String rpIdentifier, String rpMapTable) throws SQLException {
+        String getRpIdQuery = "SELECT * FROM " + rpMapTable + " WHERE identifier= ?";
 
-        try (PreparedStatement preparedStatement = c.prepareStatement(getSpIdQuery)) {
+        try (PreparedStatement preparedStatement = c.prepareStatement(getRpIdQuery,
+                ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE))
+        {
             preparedStatement.setString(1, rpIdentifier);
             ResultSet rs = preparedStatement.executeQuery();
             rs.first();
@@ -245,7 +247,9 @@ public class RelyingPartyServiceImpl implements RelyingPartyService {
     private int extractIdpId(Connection c, String idpEntityId, String idpMapTable) throws SQLException {
         String getIdPIdQuery = "SELECT * FROM " + idpMapTable + " WHERE identifier = ?";
 
-        try (PreparedStatement preparedStatement = c.prepareStatement(getIdPIdQuery)) {
+        try (PreparedStatement preparedStatement = c.prepareStatement(getIdPIdQuery,
+                ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE))
+        {
             preparedStatement.setString(1, idpEntityId);
             ResultSet rs = preparedStatement.executeQuery();
             rs.first();
