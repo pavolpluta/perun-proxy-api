@@ -6,7 +6,6 @@ import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import lombok.NonNull;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -68,20 +67,5 @@ public interface RelyingPartyFacade {
      */
     String getRpEnvironmentValue(@NonNull String rpIdentifier)
             throws PerunUnknownException, PerunConnectionException, EntityNotFoundException;
-
-    /**
-     * Log statistics about login into corresponding table
-     * @param login Login of the user
-     * @param rpIdentifier RP identifier
-     * @param rpName Name of the RP
-     * @param idpEntityId ID of IDP entity
-     * @param idpName Name of IDP
-     * @return TRUE if data were inserted into the table, otherwise FALSE.
-     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
-     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
-     * @throws EntityNotFoundException Throw when no RP has been found for given identifier.
-     */
-    boolean logStatistics(String login, String rpIdentifier, String rpName, String idpEntityId, String idpName)
-            throws EntityNotFoundException, PerunUnknownException, PerunConnectionException;
 
 }

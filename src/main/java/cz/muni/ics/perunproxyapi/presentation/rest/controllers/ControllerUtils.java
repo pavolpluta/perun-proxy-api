@@ -13,7 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static cz.muni.ics.perunproxyapi.presentation.rest.controllers.ProxyUserProtectedController.ATTRIBUTES;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.ATTRIBUTES;
 
 @Slf4j
 public class ControllerUtils {

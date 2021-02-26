@@ -7,7 +7,6 @@ import cz.muni.ics.perunproxyapi.application.facade.configuration.FacadeConfigur
 import cz.muni.ics.perunproxyapi.application.service.ProxyUserService;
 import cz.muni.ics.perunproxyapi.application.service.RelyingPartyService;
 import cz.muni.ics.perunproxyapi.persistence.adapters.DataAdapter;
-import cz.muni.ics.perunproxyapi.persistence.adapters.FullAdapter;
 import cz.muni.ics.perunproxyapi.persistence.adapters.impl.AdaptersContainer;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.EntityNotFoundException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
@@ -17,13 +16,9 @@ import cz.muni.ics.perunproxyapi.persistence.models.User;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.sql.DataSource;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,39 +37,26 @@ public class RelyingPartyFacadeImpl implements RelyingPartyFacade {
     public static final String CHECK_GROUP_MEMBERSHIP = "check_group_membership";
     public static final String IS_TEST_SP = "is_test_sp";
     public static final String HAS_ACCESS_TO_SERVICE = "has_access_to_service";
-    private static final String LOG_STATISTICS = "log_statistics";
     public static final String PROD_VO_IDS = "prod_vo_ids";
     public static final String TEST_VO_IDS = "test_vo_ids";
     public static final String RP_ENVIRONMENT_ATTR = "rp_environment_attr";
     public static final String RP_ENVIRONMENT = "rp_environment";
-    public static final String CREATE_MEMBER_IN_VO = "create_member_in_vo";
-    public static final String VO_ID = "vo_id";
-    public static final String REQUIRED_ATTRIBUTES = "required_attributes";
-    public static final String LOGIN_ATTRIBUTES = "login_attributes";
-    public static final String ATTR_MAPPER = "attr_mapper";
-    public static final String CANDIDATE_ATTR_MAPPER = "candidate_attr_mapper";
-    private static final String STATISTICS_TABLE_NAME = "statistics_table_name";
-    private static final String IDP_MAP_TABLE_NAME = "idp_map_table_name";
-    private static final String RP_MAP_TABLE_NAME = "rp_map_table_name";
 
     private final Map<String, JsonNode> methodConfigurations;
     private final AdaptersContainer adaptersContainer;
     private final RelyingPartyService relyingPartyService;
     private final ProxyUserService proxyUserService;
-    private final String loginAttrIdentifier;
 
     @Autowired
     public RelyingPartyFacadeImpl(@NonNull AdaptersContainer adaptersContainer,
                                   @NonNull FacadeConfiguration facadeConfiguration,
                                   @NonNull RelyingPartyService relyingPartyService,
-                                  @NonNull ProxyUserService proxyUserService,
-                                  @Value("${attributes.identifiers.login}") String loginAttrIdentifier)
+                                  @NonNull ProxyUserService proxyUserService)
     {
         this.adaptersContainer = adaptersContainer;
         this.methodConfigurations = facadeConfiguration.getRelyingPartyAdapterMethodConfigurations();
         this.relyingPartyService = relyingPartyService;
         this.proxyUserService = proxyUserService;
-        this.loginAttrIdentifier = loginAttrIdentifier;
     }
 
     @Override
@@ -170,23 +152,6 @@ public class RelyingPartyFacadeImpl implements RelyingPartyFacade {
         String attrName = FacadeUtils.getRequiredStringOption(RP_ENVIRONMENT_ATTR, RP_ENVIRONMENT, options);
 
         return relyingPartyService.getRpEnvironmentValue(rpIdentifier, adapter, attrName);
-    }
-
-    @Override
-    public boolean logStatistics(String login, String rpIdentifier, String rpName, String idpEntityId, String idpName) throws EntityNotFoundException, PerunUnknownException, PerunConnectionException {
-        JsonNode options = FacadeUtils.getOptions(LOG_STATISTICS, methodConfigurations);
-        String statisticsTableName = FacadeUtils.getStringOption(STATISTICS_TABLE_NAME, options);
-        String idpMapTable = FacadeUtils.getStringOption(IDP_MAP_TABLE_NAME, options);
-        String rpMapTable = FacadeUtils.getStringOption(RP_MAP_TABLE_NAME, options);
-
-        FullAdapter adapter = adaptersContainer.getRpcAdapter();
-        User user = proxyUserService.getUserByLogin(adapter, login);
-        if (user == null) {
-            throw new EntityNotFoundException("No user has been found for given login");
-        }
-
-        return relyingPartyService.logStatistics(user.getPerunId(), idpEntityId, idpName, rpIdentifier, rpName,
-                statisticsTableName, idpMapTable, rpMapTable);
     }
 
 }

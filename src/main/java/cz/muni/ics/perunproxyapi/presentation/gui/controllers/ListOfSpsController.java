@@ -18,8 +18,8 @@ import org.springframework.web.servlet.ModelAndView;
 
 import java.io.IOException;
 
-import static cz.muni.ics.perunproxyapi.presentation.rest.config.PathConstants.GUI;
-import static cz.muni.ics.perunproxyapi.presentation.rest.config.PathConstants.NO_AUTH_PATH;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.GUI;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.NO_AUTH_PATH;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**

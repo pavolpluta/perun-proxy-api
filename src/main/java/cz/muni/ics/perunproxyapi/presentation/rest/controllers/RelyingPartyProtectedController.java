@@ -1,6 +1,5 @@
 package cz.muni.ics.perunproxyapi.presentation.rest.controllers;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import cz.muni.ics.perunproxyapi.application.facade.RelyingPartyFacade;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.EntityNotFoundException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.InvalidRequestParameterException;
@@ -8,16 +7,20 @@ import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.util.Set;
 
-import static cz.muni.ics.perunproxyapi.presentation.rest.config.PathConstants.AUTH_PATH;
-import static cz.muni.ics.perunproxyapi.presentation.rest.config.PathConstants.RELYING_PARTY;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.AUTH_PATH;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.LOGIN;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.RELYING_PARTY;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.RP_IDENTIFIER;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 
@@ -31,12 +34,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping(value = AUTH_PATH + RELYING_PARTY)
 @Slf4j
 public class RelyingPartyProtectedController {
-
-    public static final String RP_IDENTIFIER = "rp-identifier";
-    public static final String LOGIN = "login";
-    private static final String IDP_ENTITY_ID = "idpEntityId";
-    private static final String RP_NAME = "rpName";
-    private static final String IDP_NAME = "idpName";
 
     private final RelyingPartyFacade facade;
 
@@ -66,7 +63,7 @@ public class RelyingPartyProtectedController {
     @ResponseBody
     @GetMapping(value = "/{rp-identifier}/proxy-user/{login}/entitlements", produces = APPLICATION_JSON_VALUE)
     public Set<String> getEntitlements(@PathVariable(RP_IDENTIFIER) String rpIdentifier,
-                                        @PathVariable(LOGIN) String login)
+                                       @PathVariable(LOGIN) String login)
             throws PerunUnknownException, PerunConnectionException, EntityNotFoundException,
             InvalidRequestParameterException
     {
@@ -158,58 +155,6 @@ public class RelyingPartyProtectedController {
         }
         String decodedRpIdentifier = ControllerUtils.decodeUrlSafeBase64(rpIdentifier);
         return facade.getRpEnvironmentValue(decodedRpIdentifier);
-    }
-
-    /**
-     * <pre>
-     * Log statistics about login into corresponding tables
-     *
-     * EXAMPLE CURL:
-     *  curl --request PUT \
-     *   --url http://localhost:8080/proxyapi/auth/relying-party/statistics \
-     *   --header 'Authorization: Basic auth' \
-     *   --header 'Content-Type: application/json' \
-     *   --data '{
-     * 	    "login": "test_user_login",
-     * 	    "rp-identifier": "test_rpIdentifier",
-     * 	    "rpName": "test_rpName",
-     * 	    "idpEntityId": "test_idpEntityId",
-     * 	    "idpName": "test_IdpName"
-     *    }'
-     * </pre>
-     * @param body json body corresponding of required attributes:
-     *             - login
-     *             - rp-identifier
-     *             - rpName
-     *             - idpEntityId
-     *             - idpName
-     * @return HTTP Status 200 if data was successfully logged into statistics table, otherwise 404.
-     * @throws InvalidRequestParameterException Thrown when passed request parameters do not meet criteria.
-     * @throws EntityNotFoundException Thrown when no user has been found.
-     * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
-     * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
-     */
-    @ResponseBody
-    @PutMapping(value = "/statistics", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> logStatistics(@RequestBody JsonNode body) throws InvalidRequestParameterException, EntityNotFoundException, PerunUnknownException, PerunConnectionException {
-        if (body == null) {
-            throw new InvalidRequestParameterException("Request body is empty.");
-        }
-
-        String login = ControllerUtils.extractRequiredString(body, LOGIN);
-        String rpIdentifier = ControllerUtils.extractRequiredString(body, RP_IDENTIFIER);
-        String rpName = ControllerUtils.extractRequiredString(body, RP_NAME);
-        String idpEntityId = ControllerUtils.extractRequiredString(body, IDP_ENTITY_ID);
-        String idpName = ControllerUtils.extractRequiredString(body, IDP_NAME);
-
-
-        boolean result = facade.logStatistics(login, rpIdentifier, rpName, idpEntityId, idpName);
-
-        if (result) {
-            return new ResponseEntity<>("Statistics successfully logged.", HttpStatus.OK);
-        }
-
-        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 }

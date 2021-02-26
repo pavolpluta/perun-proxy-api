@@ -1,12 +1,11 @@
 package cz.muni.ics.perunproxyapi.presentation.rest.controllers;
 
-import cz.muni.ics.perunproxyapi.application.facade.ProxyuserFacade;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import static cz.muni.ics.perunproxyapi.presentation.rest.config.PathConstants.NO_AUTH_PATH;
-import static cz.muni.ics.perunproxyapi.presentation.rest.config.PathConstants.PROXY_USER;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.NO_AUTH_PATH;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.PROXY_USER;
 
 
 /**

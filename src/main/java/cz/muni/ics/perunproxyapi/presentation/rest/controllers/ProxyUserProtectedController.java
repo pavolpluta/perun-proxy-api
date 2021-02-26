@@ -28,8 +28,15 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import static cz.muni.ics.perunproxyapi.presentation.rest.config.PathConstants.AUTH_PATH;
-import static cz.muni.ics.perunproxyapi.presentation.rest.config.PathConstants.PROXY_USER;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.ATTRIBUTES;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.AUTH_PATH;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.EXT_SOURCE_IDENTIFIER;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.FIELDS;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.IDENTIFIERS;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.IDP_IDENTIFIER;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.LOGIN;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.PROXY_USER;
+import static cz.muni.ics.perunproxyapi.presentation.rest.config.WebConstants.USER_ID;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
@@ -42,15 +49,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping(value = AUTH_PATH + PROXY_USER)
 @Slf4j
 public class ProxyUserProtectedController {
-
-    public static final String IDP_IDENTIFIER = "IdPIdentifier";
-    public static final String IDENTIFIERS = "identifiers";
-    public static final String LOGIN = "login";
-    public static final String FIELDS = "fields";
-    public static final String USER_ID = "userId";
-    public static final String ATTRIBUTES = "attributes";
-    public static final String FACILITY_ID = "facilityId";
-    public static final String EXT_SOURCE_IDENTIFIER = "extSourceIdentifier";
 
     private final ProxyuserFacade facade;
 
@@ -66,7 +64,7 @@ public class ProxyUserProtectedController {
      * EXAMPLE CURL:
      * curl --request GET \
      *   --url 'http://127.0.0.1/proxyapi/auth/proxy-user/findByExtLogins?\
-     *   IdPIdentifier=aHR0cHM6Ly9sb2dpbi5jZXNuZXQuY3ovaWRwLw%3D%3D\
+     *  idp-identifier=aHR0cHM6Ly9sb2dpbi5jZXNuZXQuY3ovaWRwLw%3D%3D\
      *   &identifiers=id1&identifiers=id2\
      *   &fields=urn%3Aperun%3Auser%3Aattribute-def%3Adef%3Aattr1&fields=urn%3Aperun%3Auser%3Aattribute-def%3Adef%3Aattr2' \
      *   --header 'authorization: Basic auth' \
@@ -105,7 +103,7 @@ public class ProxyUserProtectedController {
      *   --header 'authorization: Basic auth' \
      *   --header 'content-type: application/json' \
      *   --data '{
-     *             "IdPIdentifier": "aksn64a6sdsgsd48s123",
+     *             "idp-identifier": "aksn64a6sdsgsd48s123",
      *             "identifiers": ["id1", "445348@muni.cz", "id2"],
      *             "fields": [
      *               "urn:perun:user:attribute-def:def:attr1",
@@ -185,7 +183,7 @@ public class ProxyUserProtectedController {
      *   --header 'authorization: Basic auth' \
      *   --header 'content-type: application/json' \
      *   --data '{
-     *             "IdPIdentifier": "aksn64a6sdsgsd48s123",
+     *             "idp-identifier": "aksn64a6sdsgsd48s123",
      *             "identifiers": ["id1", "445348@muni.cz", "id2"],
      *             "fields": [
      *               "urn:perun:user:attribute-def:def:attr1",
@@ -289,7 +287,7 @@ public class ProxyUserProtectedController {
      * Find Perun user by id and get specified attributes. If no attributes are specified, default set is fetched.
      *
      * EXAMPLE CURL:
-     * curl --request GET --url 'http://127.0.0.1/proxyapi/auth/proxy-user/findByPerunUserId?userId=12345\
+     * curl --request GET --url 'http://127.0.0.1/proxyapi/auth/proxy-user/findByPerunUserId?user-id=12345\
      *   &fields=urn%3Aperun%3Auser%3Aattribute-def%3Adef%3Aattr1&fields=urn%3Aperun%3Auser%3Aattribute-def%3Adef%3Aattr2' \
      *   --header 'authorization: Basic auth' \
      *
@@ -322,7 +320,7 @@ public class ProxyUserProtectedController {
      * --header 'authorization: Basic auth'
      *
      * @param body Request body. JSON containing fields:
-     *             - userId: Id of user in Perun. REQUIRED
+     *             - user-id: Id of user in Perun. REQUIRED
      *             - fields: List of strings identifying attributes we want to fetch. OPTIONAL
      * @return JSON representation of the User object.
      * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
@@ -371,7 +369,7 @@ public class ProxyUserProtectedController {
      * Update attributes of the external source.
      *
      * curl --request PUT \
-     *   --url http://127.0.0.1/proxyapi/auth/proxy-user/{login}/identity/{IdPIdentifier} \
+     *   --url http://127.0.0.1/proxyapi/auth/proxy-user/{login}/identity/{idp-identifier} \
      *   --header 'authorization: Basic auth' \
      *   --header 'content-type: application/json' \
      *   --data '{
@@ -390,7 +388,7 @@ public class ProxyUserProtectedController {
      * @throws PerunConnectionException Thrown when problem with connection to Perun interface occurs.
      */
     @ResponseBody
-    @PutMapping(value = "/{login}/identity/{IdPIdentifier}",
+    @PutMapping(value = "/{login}/identity/{idp-identifier}",
             produces = APPLICATION_JSON_VALUE,
             consumes = APPLICATION_JSON_VALUE)
     public boolean updateUserIdentityAttributes(@PathVariable(value = LOGIN) String login,
@@ -415,7 +413,7 @@ public class ProxyUserProtectedController {
      * Get all GA4GH Visas and Passports for user with given Perun ID.
      *
      * EXAMPLE CURL:
-     * curl --request GET --url 'http://127.0.0.1:8081/proxyapi/auth/proxy-user/ga4gh?userId=12345
+     * curl --request GET --url 'http://127.0.0.1:8081/proxyapi/auth/proxy-user/ga4gh?user-id=12345
      * --header 'authorization: Basic auth'
      *
      * @param userId Id of user in Perun
@@ -441,7 +439,7 @@ public class ProxyUserProtectedController {
      * Get all GA4GH Visas and Passports for user with given login.
      *
      * EXAMPLE CURL:
-     * curl --request GET --url 'http://127.0.0.1:8081/proxyapi/auth/proxy-user/ga4gh?userId=12345
+     * curl --request GET --url 'http://127.0.0.1:8081/proxyapi/auth/proxy-user/ga4gh?user-id=12345
      * --header 'authorization: Basic auth'
      *
      * @param login Users login
@@ -480,7 +478,7 @@ public class ProxyUserProtectedController {
      *       "eduPersonTargetedId": "12345jd@edu.com",
      *       "eduPersonScopedAffiliation": "eduPersonScopedAffiliation"
      *     },
-     *     "extSourceIdentifier": "https://login.somewhere5.org"
+     *     "ext-source-identifier": "https://login.somewhere5.org"
      *   }'
      * </pre>
      * @param body Request body. Example above in the CURL request.

@@ -22,12 +22,17 @@ connector:
     connection_pool_size: 20
     base_dn: "dc=perun,dc=cesnet,dc=cz"
     use_tls: true
-  stats:
-    datasource:
-      url: "jdbc:url"
-      driver-class-name: "org.example.driver"
-      username: "dbuser"
-      password: "dbpass"
+
+database:
+  statistics:
+    url: "jdbc:mysql://localhost:3306/stats"
+    driver_class_name: "com.mysql.cj.jdbc.Driver"
+    username: "dbuser"
+    password: "dbpass"
+    maximum_pool_size: 10
+    idp_map_table: "idpMap"
+    rp_map_table: "rpMap"
+    statistics_table: "stats"
 
 attributes:
   paths:
@@ -42,6 +47,7 @@ facade:
     proxyuser: "/etc/perun/proxyuser-facade.yml"
     relying_party: "/etc/perun/relying-party-facade.yml"
     gui: "/etc/perun/gui-facade.yml"
+    statistics: "/etc/perun/statistics-facade.yml"
 
 security:
   basicauth:
