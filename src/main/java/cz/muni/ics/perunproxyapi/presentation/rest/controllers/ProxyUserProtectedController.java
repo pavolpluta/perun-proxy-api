@@ -464,6 +464,7 @@ public class ProxyUserProtectedController {
     }
 
     /**
+     * <pre>
      * Create new member in the VO.
      *
      * EXAMPLE CURL:
@@ -481,7 +482,7 @@ public class ProxyUserProtectedController {
      *     },
      *     "extSourceIdentifier": "https://login.somewhere5.org"
      *   }'
-     *
+     * </pre>
      * @param body Request body. Example above in the CURL request.
      * @return HTTP Status 201 if the member was successfully created, otherwise 404.
      * @throws PerunUnknownException Thrown as wrapper of unknown exception thrown by Perun interface.
@@ -491,7 +492,7 @@ public class ProxyUserProtectedController {
      */
     @ResponseBody
     @PostMapping(value = "", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> create(@RequestBody JsonNode body)
+    public ResponseEntity<String> create(@RequestBody JsonNode body)
             throws PerunUnknownException, PerunConnectionException, InvalidRequestParameterException, IOException
     {
         if (body == null || !body.hasNonNull(ATTRIBUTES)) {
