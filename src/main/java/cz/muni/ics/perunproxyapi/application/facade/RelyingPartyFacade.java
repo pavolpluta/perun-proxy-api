@@ -6,7 +6,6 @@ import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import lombok.NonNull;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 
 /**

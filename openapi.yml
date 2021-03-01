@@ -67,7 +67,7 @@ components:
     FindByIdentifiersRequestBody:
       type: object
       properties:
-        IdPIdentifier:
+        idp-identifier:
           type: string
           example: "https://example.com/"
         identifiers:
@@ -78,18 +78,18 @@ components:
         fields:
           $ref: '#/components/schemas/Fields'
       required:
-        - IdPIdentifier
+        - idp-identifier
         - identifiers
     FindByPerunUserIdRequestBody:
       type: object
       properties:
-        userId:
+        user-id:
           type: integer
           example: 123456
         fields:
           $ref: '#/components/schemas/Fields'
       required:
-        - userId
+        - user-id
     CreateProxyUserRequestBody:
       type: object
       properties:
@@ -98,6 +98,29 @@ components:
           example: 'https://login.somewhere.org'
         attributes:
           $ref: '#/components/schemas/UserAttributes'
+    InsertStatisticsLogin:
+      type: object
+      properties:
+        rp-identifier:
+          type: string
+          example: 'dGVzdA=='
+          description: 'Base64 URL safe encoded identifier of the relying party'
+        rp-name:
+          type: string
+          example: 'Sample RP'
+          description: 'Human readable name for displaying purposes'
+        idp-identifier:
+          type: string
+          example: 'dGVzdA=='
+          description: 'Base64 URL safe encoded identifier of the identity provider'
+        idp-name:
+          type: string
+          example: 'Sample IdP'
+          description: 'Human readable name for displaying purposes'
+        login:
+          type: string
+          example: '1a2b3c@example.com'
+          description: 'Login of the user'
   responses:
     400BadRequest:
       description: Bad Request
@@ -234,7 +257,7 @@ paths:
           $ref: '#/components/responses/500InternalError'
         '503':
           $ref: '#/components/responses/503TemporaryUnavailable'
-  /auth/proxy-user/{login}/identity/{identityId}:
+  /auth/proxy-user/{login}/identity/{identity-id}:
     put:
       summary: Update User-Identity attributes
       parameters:
@@ -244,7 +267,7 @@ paths:
           description: User's login
           schema:
             type: string
-        - name: identityId
+        - name: identity-id
           in: path
           required: true
           description: Identity unique identifier(in base64url saf)
@@ -276,7 +299,7 @@ paths:
     get:
       summary:  Find proxy user by given sourceIdP EntityId and addition source identifiers
       parameters:
-        - name: IdPIdentifier
+        - name: idp-identifier
           in: query
           description: IdP Identifier in base64url safe format
           required: true
@@ -354,7 +377,7 @@ paths:
     get:
       summary: Find proxy user by given sourceIdP EntityId and extLogins
       parameters:
-        - name: IdPIdentifier
+        - name: idp-identifier
           in: query
           description: IdP Identifier in base64url safe format
           required: true
@@ -432,7 +455,7 @@ paths:
     get:
       summary: Search user by given sourceIdP EntityId and source identifiers
       parameters:
-        - name: userId
+        - name: user-id
           in: query
           required: true
           description: User's perun ID
@@ -674,7 +697,7 @@ paths:
     get:
       summary: Get GA4GH passport for the given user.
       parameters:
-        - name: userId
+        - name: user-id
           in: query
           required: true
           description: User's perun ID
@@ -742,6 +765,31 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateProxyUserRequestBody'
+      security:
+        - BasicAuth: [ ]
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401NotAuthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '405':
+          $ref: '#/components/responses/405NotAllowed'
+        '500':
+          $ref: '#/components/responses/500InternalError'
+        '503':
+          $ref: '#/components/responses/503TemporaryUnavailable'
+  /auth/statistics:
+    put:
+      summary: 'Insert login for specific identity provider, relying party and user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref:  '#/components/schemas/InsertStatisticsLogin'
       security:
         - BasicAuth: [ ]
       responses:

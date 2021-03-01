@@ -1,0 +1,5 @@
+---
+
+- methodName: "log_statistics"
+  configuration:
+

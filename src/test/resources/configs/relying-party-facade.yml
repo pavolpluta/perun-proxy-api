@@ -16,3 +16,9 @@
     test_vo_ids: [6, 7, 8, 9, 10]
     check_group_membership: "urn:perun:facility:attribute-def:def:checkGroupMembership"
     is_test_sp: "urn:perun:facility:attribute-def:def:isTestSp"
+
+- methodName: "log_statistics"
+  configuration:
+    statistics_table_name: "statistics_per_user"
+    idp_map_table_name: "statistics_idp"
+    rp_map_table_name: "statistics_sp"

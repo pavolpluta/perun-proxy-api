@@ -11,6 +11,7 @@ import cz.muni.ics.perunproxyapi.persistence.models.Facility;
 import cz.muni.ics.perunproxyapi.persistence.models.Group;
 import cz.muni.ics.perunproxyapi.persistence.models.PerunAttributeValue;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.yaml.snakeyaml.external.com.google.gdata.util.common.base.PercentEscaper;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 import static cz.muni.ics.perunproxyapi.persistence.enums.Entity.FACILITY;
 
 @Component
+@Slf4j
 public class RelyingPartyServiceImpl implements RelyingPartyService {
 
     private static final PercentEscaper ESCAPER = new PercentEscaper("-_.!~*'()", false);

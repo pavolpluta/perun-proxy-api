@@ -33,6 +33,17 @@ connector:
     base_dn: "dc=perun-dev,dc=cesnet,dc=cz"
     use_tls: false
 
+database:
+  statistics:
+    url: "jdbc:h2:mem:myDb;DB_CLOSE_DELAY=-1"
+    driver_class_name: "org.h2.Driver"
+    username: "dbuser"
+    password: "dbpass"
+    maximum_pool_size: 10
+    idp_map_table: "idpMap"
+    rp_map_table: "rpMap"
+    statistics_table: "stats"
+
 attributes:
   paths:
     - "${PWD}/src/test/resources/configs/attributes/attributes.yml"
@@ -47,6 +58,7 @@ facade:
     proxyuser: "${PWD}/src/test/resources/configs/proxyuser-facade.yml"
     relying_party: "${PWD}/src/test/resources/configs/relying-party-facade.yml"
     gui: "${PWD}/src/test/resources/configs/gui-facade.yml"
+    statistics: "${PWD}/src/test/resources/configs/statistics-facade.yml"
 
 security:
   basicauth:

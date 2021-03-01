@@ -16,11 +16,9 @@ import cz.muni.ics.perunproxyapi.persistence.models.User;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,31 +41,22 @@ public class RelyingPartyFacadeImpl implements RelyingPartyFacade {
     public static final String TEST_VO_IDS = "test_vo_ids";
     public static final String RP_ENVIRONMENT_ATTR = "rp_environment_attr";
     public static final String RP_ENVIRONMENT = "rp_environment";
-    public static final String CREATE_MEMBER_IN_VO = "create_member_in_vo";
-    public static final String VO_ID = "vo_id";
-    public static final String REQUIRED_ATTRIBUTES = "required_attributes";
-    public static final String LOGIN_ATTRIBUTES = "login_attributes";
-    public static final String ATTR_MAPPER = "attr_mapper";
-    public static final String CANDIDATE_ATTR_MAPPER = "candidate_attr_mapper";
 
     private final Map<String, JsonNode> methodConfigurations;
     private final AdaptersContainer adaptersContainer;
     private final RelyingPartyService relyingPartyService;
     private final ProxyUserService proxyUserService;
-    private final String loginAttrIdentifier;
 
     @Autowired
     public RelyingPartyFacadeImpl(@NonNull AdaptersContainer adaptersContainer,
                                   @NonNull FacadeConfiguration facadeConfiguration,
                                   @NonNull RelyingPartyService relyingPartyService,
-                                  @NonNull ProxyUserService proxyUserService,
-                                  @Value("${attributes.identifiers.login}") String loginAttrIdentifier)
+                                  @NonNull ProxyUserService proxyUserService)
     {
         this.adaptersContainer = adaptersContainer;
         this.methodConfigurations = facadeConfiguration.getRelyingPartyAdapterMethodConfigurations();
         this.relyingPartyService = relyingPartyService;
         this.proxyUserService = proxyUserService;
-        this.loginAttrIdentifier = loginAttrIdentifier;
     }
 
     @Override
