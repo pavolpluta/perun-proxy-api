@@ -24,8 +24,8 @@ public final class WebConstants {
     // parameters
     public static final String RP_IDENTIFIER = "rp-identifier";
     public static final String LOGIN = "login";
-    public static final String RP_NAME = "rpName";
-    public static final String IDP_NAME = "idpName";
+    public static final String RP_NAME = "rp-name";
+    public static final String IDP_NAME = "idp-name";
     public static final String IDP_IDENTIFIER = "idp-identifier";
     public static final String IDENTIFIERS = "identifiers";
     public static final String FIELDS = "fields";

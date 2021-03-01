@@ -105,7 +105,7 @@ public class StatisticsManagerImpl implements StatisticsManager {
             throws DBOperationException
     {
         String queryBase = "INSERT INTO %s(identifier, name)" +
-                " VALUES (:%s, :%s) ON DUPLICATE KEY UPDATE name = :%s)";
+                " VALUES (:%s, :%s) ON DUPLICATE KEY UPDATE name = :%s";
         String query = String.format(queryBase, table, PARAM_IDENTIFIER, PARAM_NAME, PARAM_NAME);
 
         Map<String, Object> params = new HashMap<>();

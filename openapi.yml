@@ -98,6 +98,29 @@ components:
           example: 'https://login.somewhere.org'
         attributes:
           $ref: '#/components/schemas/UserAttributes'
+    InsertStatisticsLogin:
+      type: object
+      properties:
+        rp-identifier:
+          type: string
+          example: 'dGVzdA=='
+          description: 'Base64 URL safe encoded identifier of the relying party'
+        rp-name:
+          type: string
+          example: 'Sample RP'
+          description: 'Human readable name for displaying purposes'
+        idp-identifier:
+          type: string
+          example: 'dGVzdA=='
+          description: 'Base64 URL safe encoded identifier of the identity provider'
+        idp-name:
+          type: string
+          example: 'Sample IdP'
+          description: 'Human readable name for displaying purposes'
+        login:
+          type: string
+          example: '1a2b3c@example.com'
+          description: 'Login of the user'
   responses:
     400BadRequest:
       description: Bad Request
@@ -742,6 +765,31 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateProxyUserRequestBody'
+      security:
+        - BasicAuth: [ ]
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401NotAuthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '405':
+          $ref: '#/components/responses/405NotAllowed'
+        '500':
+          $ref: '#/components/responses/500InternalError'
+        '503':
+          $ref: '#/components/responses/503TemporaryUnavailable'
+  /auth/statistics:
+    put:
+      summary: 'Insert login for specific identity provider, relying party and user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref:  '#/components/schemas/InsertStatisticsLogin'
       security:
         - BasicAuth: [ ]
       responses:

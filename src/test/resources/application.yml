@@ -35,8 +35,8 @@ connector:
 
 database:
   statistics:
-    url: "jdbc:mysql://localhost:3306/stats"
-    driver_class_name: "com.mysql.cj.jdbc.Driver"
+    url: "jdbc:h2:mem:myDb;DB_CLOSE_DELAY=-1"
+    driver_class_name: "org.h2.Driver"
     username: "dbuser"
     password: "dbpass"
     maximum_pool_size: 10
