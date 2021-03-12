@@ -6,6 +6,7 @@ import cz.muni.ics.perunproxyapi.persistence.exceptions.EntityNotFoundException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunConnectionException;
 import cz.muni.ics.perunproxyapi.persistence.exceptions.PerunUnknownException;
 import cz.muni.ics.perunproxyapi.persistence.models.listOfServices.ListOfServicesDAO;
+import cz.muni.ics.perunproxyapi.presentation.DTOModels.statistics.StatisticsDTO;
 import lombok.NonNull;
 
 /**
@@ -45,5 +46,32 @@ public interface GuiFacade {
      */
     String getRpEnvironmentValue(@NonNull String rpIdentifier)
             throws PerunUnknownException, PerunConnectionException, EntityNotFoundException;
+
+    /**
+     * Get statistics for logins and its distribution among RPs and IdPs.
+     * @param currentUrl URL of the actual request.
+     * @return StatisticsDTO with no label.
+     */
+    StatisticsDTO getAllStatistics(@NonNull String currentUrl);
+
+    /**
+     * Get statistics for particular RP. Includes logins per day and its distribution among IdPs.
+     * @param currentUrl URL of the actual request.
+     * @param rpIdentifier Identifier of the Relying Party.
+     * @return StatisticsDTO without filled fields for RPs.
+     * @throws EntityNotFoundException Throw when no RP has been found for given identifier.
+     */
+    StatisticsDTO getStatisticsForRp(@NonNull String currentUrl, @NonNull String rpIdentifier)
+            throws EntityNotFoundException;
+
+    /**
+     * Get statistics for particular IdP. Includes logins per day and its distribution among IdPs.
+     * @param currentUrl URL of the actual request.
+     * @param idpIdentifier Identifier of the Identity Provider.
+     * @return StatisticsDTO without filled fields for IdPs.
+     * @throws EntityNotFoundException Throw when no IdP has been found for given identifier.
+     */
+    StatisticsDTO getStatisticsForIdp(@NonNull String currentUrl, @NonNull String idpIdentifier)
+            throws EntityNotFoundException;
 
 }
